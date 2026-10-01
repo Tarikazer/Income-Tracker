@@ -83,6 +83,12 @@ interface ExpenseDao {
 
     @Query("DELETE FROM expenses WHERE id = :id")
     suspend fun deleteExpenseById(id: Long)
+
+    @Query("DELETE FROM expenses WHERE categoryId = :categoryId")
+    suspend fun deleteExpensesForCategory(categoryId: Long)
+
+    @Query("UPDATE expenses SET categoryId = 0, categoryName = 'Separate Purchase', categoryIconKey = 'shopping' WHERE isRecurring = 0 AND (categoryName = 'Alimentation' OR categoryId = 3)")
+    suspend fun detachShoppingFromAlimentation()
 }
 
 @Dao
@@ -98,6 +104,9 @@ interface BudgetDao {
 
     @Query("SELECT * FROM budgets WHERE categoryId = :categoryId AND monthYear = :monthYear LIMIT 1")
     suspend fun getBudgetForCategory(categoryId: Long, monthYear: String): BudgetEntity?
+
+    @Query("DELETE FROM budgets WHERE categoryId = :categoryId")
+    suspend fun deleteBudgetsForCategory(categoryId: Long)
 
     @Query("UPDATE budgets SET plannedAmount = 0.0")
     suspend fun resetAllBudgetsToZero()

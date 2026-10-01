@@ -2,7 +2,6 @@ package com.example.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +29,7 @@ fun CategoryCard(
     onAddExpense: () -> Unit,
     onEditBudget: () -> Unit,
     onViewHistory: () -> Unit,
+    onDeleteCategory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val category = categoryData.category
@@ -53,16 +54,24 @@ fun CategoryCard(
         modifier = modifier
             .fillMaxWidth()
             .testTag("category_card_${category.name.lowercase().replace(" ", "_")}"),
-        shape = RoundedCornerShape(18.dp),
-        color = EmeraldSurface,
-        border = BorderStroke(1.dp, EmeraldCardBorder)
+        shape = RoundedCornerShape(20.dp),
+        color = Color(0xFF11221C),
+        border = BorderStroke(1.dp, Color(0xFF1D382E))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF142720),
+                            Color(0xFF0F1E19)
+                        )
+                    )
+                )
                 .padding(16.dp)
         ) {
-            // Header Row: Icon, Name, (Recurring icon), and Action icons (History, Edit/Swap)
+            // Header Row: Icon, Name, (Recurring icon), and Action icons (History, Edit/Swap, Delete)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -75,9 +84,9 @@ fun CategoryCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
-                            .background(Color(category.colorHex).copy(alpha = 0.2f)),
+                            .background(Color(category.colorHex).copy(alpha = 0.22f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -102,14 +111,15 @@ fun CategoryCard(
                             imageVector = Icons.Rounded.Sync,
                             contentDescription = "Recurring",
                             tint = TextMuted,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                     }
                 }
 
+                // Actions: History, Edit Budget, Delete Category
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     IconButton(
                         onClick = onViewHistory,
@@ -121,7 +131,7 @@ fun CategoryCard(
                             imageVector = Icons.Rounded.History,
                             contentDescription = "Category history",
                             tint = TextSecondary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(19.dp)
                         )
                     }
 
@@ -135,7 +145,21 @@ fun CategoryCard(
                             imageVector = Icons.Rounded.SwapVert,
                             contentDescription = "Edit budget",
                             tint = TextSecondary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(19.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onDeleteCategory,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("delete_category_${category.id}")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.DeleteOutline,
+                            contentDescription = "Delete category",
+                            tint = TextMuted,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -151,7 +175,7 @@ fun CategoryCard(
                     .height(6.dp)
                     .clip(RoundedCornerShape(3.dp)),
                 color = progressColor,
-                trackColor = Color(0xFF223830),
+                trackColor = Color(0xFF1E332B),
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -167,17 +191,17 @@ fun CategoryCard(
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = TextSecondary,
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Normal
+                        fontWeight = FontWeight.Medium
                     ),
                     modifier = Modifier.testTag("budget_progress_text_${category.id}")
                 )
 
-                // "+ Add expense" pill button
+                // "+ Add expense" pill button (matching Screenshot 2 exactly)
                 Surface(
                     onClick = onAddExpense,
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF1E3A30),
-                    border = BorderStroke(1.dp, Color(0xFF2B5244)),
+                    color = Color(0xFF18382C),
+                    border = BorderStroke(1.dp, Color(0xFF285442)),
                     modifier = Modifier.testTag("add_expense_btn_${category.id}")
                 ) {
                     Row(

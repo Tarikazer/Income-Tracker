@@ -34,6 +34,12 @@ class FinanceViewModel(
     private val repository: FinanceRepository
 ) : ViewModel() {
 
+    init {
+        viewModelScope.launch {
+            repository.ensureDefaultData()
+        }
+    }
+
     // Current selected month: defaults to system time "2026-10"
     private val _selectedMonthYear = MutableStateFlow(getCurrentMonthYear())
     val selectedMonthYear: StateFlow<String> = _selectedMonthYear.asStateFlow()
@@ -297,26 +303,17 @@ class FinanceViewModel(
 
     fun addShoppingExpense(title: String, amount: Double, note: String = "") {
         viewModelScope.launch {
-            val categories = allCategories.value
-            val category = categories.firstOrNull { it.iconKey == "alimentation" }
-                ?: categories.firstOrNull { it.name.contains("Alimentation", ignoreCase = true) }
-                ?: categories.firstOrNull()
-
-            val catId = category?.id ?: 1L
-            val catName = category?.name ?: "Alimentation"
-            val iconKey = category?.iconKey ?: "alimentation"
-
             repository.addExpense(
                 ExpenseEntity(
                     title = title.trim(),
                     amount = amount,
-                    categoryId = catId,
-                    categoryName = catName,
-                    categoryIconKey = iconKey,
+                    categoryId = 0L,
+                    categoryName = "Separate Purchase",
+                    categoryIconKey = "shopping",
                     dateTimestamp = System.currentTimeMillis(),
                     monthYear = _selectedMonthYear.value,
                     note = note.trim(),
-                    isRecurring = false // Separate purchase, displays on Home Screen
+                    isRecurring = false // Separate purchase on Home Screen, never linked to Alimentation
                 )
             )
         }
@@ -380,6 +377,12 @@ class FinanceViewModel(
     fun deleteIncome(income: IncomeEntity) {
         viewModelScope.launch {
             repository.deleteIncome(income)
+        }
+    }
+
+    fun deleteCategory(category: CategoryEntity) {
+        viewModelScope.launch {
+            repository.deleteCategory(category)
         }
     }
 

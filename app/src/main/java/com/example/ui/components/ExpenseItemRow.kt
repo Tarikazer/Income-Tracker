@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -39,19 +40,32 @@ fun ExpenseItemRow(
         ""
     }
 
+    // Never display "Alimentation" for separate shopping items on Home Screen
+    val showCategory = expense.categoryName.isNotBlank() &&
+            !expense.categoryName.equals("Alimentation", ignoreCase = true) &&
+            !expense.categoryName.equals("Separate Purchase", ignoreCase = true)
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onItemClick() }
             .testTag("expense_row_${expense.id}"),
-        shape = RoundedCornerShape(16.dp),
-        color = EmeraldSurface,
-        border = BorderStroke(1.dp, EmeraldCardBorder)
+        shape = RoundedCornerShape(18.dp),
+        color = Color(0xFF11221C),
+        border = BorderStroke(1.dp, Color(0xFF1D382E))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF142720),
+                            Color(0xFF0F1E19)
+                        )
+                    )
+                )
+                .padding(horizontal = 16.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -64,19 +78,19 @@ fun ExpenseItemRow(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF1E3A30)),
+                        .background(Color(0xFF1B3D30)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = IconHelper.getCategoryIcon(expense.categoryIconKey),
-                        contentDescription = expense.categoryName,
+                        imageVector = IconHelper.getCategoryIcon(if (expense.categoryIconKey.isBlank() || expense.categoryIconKey == "alimentation") "shopping" else expense.categoryIconKey),
+                        contentDescription = expense.title,
                         tint = EmeraldPrimaryLight,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -104,21 +118,24 @@ fun ExpenseItemRow(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = expense.categoryName,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = EmeraldCyan,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                        if (showCategory) {
+                            Text(
+                                text = expense.categoryName,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = EmeraldCyan,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
                             )
-                        )
-                        Text(
-                            text = "•",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextMuted,
-                                fontSize = 12.sp
+                            Text(
+                                text = "•",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = TextMuted,
+                                    fontSize = 12.sp
+                                )
                             )
-                        )
+                        }
+
                         Text(
                             text = if (expense.note.isNotBlank()) expense.note else dateStr,
                             style = MaterialTheme.typography.bodySmall.copy(
@@ -152,10 +169,10 @@ fun ExpenseItemRow(
                         .testTag("delete_expense_${expense.id}")
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Delete,
+                        imageVector = Icons.Rounded.DeleteOutline,
                         contentDescription = "Delete expense",
                         tint = TextMuted,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                 }
             }

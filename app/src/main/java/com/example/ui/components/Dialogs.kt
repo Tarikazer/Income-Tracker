@@ -387,6 +387,37 @@ fun AddShoppingExpenseDialog(
                         .testTag("shopping_title_input")
                 )
 
+                // Quick item suggestion chips
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val suggestions = listOf("Water bottle", "Fast food", "Coffee", "Supermarket")
+                    suggestions.forEach { suggestion ->
+                        Surface(
+                            onClick = {
+                                title = suggestion
+                                errorMessage = null
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (title == suggestion) MintButtonColor else Color(0xFF1E3A30),
+                            border = BorderStroke(1.dp, Color(0xFF285040))
+                        ) {
+                            Text(
+                                text = suggestion,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = if (title == suggestion) Color(0xFF03241A) else TextSecondary,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(14.dp))
 
                 OutlinedTextField(

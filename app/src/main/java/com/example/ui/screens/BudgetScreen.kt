@@ -48,6 +48,7 @@ fun BudgetScreen(
 
     var categoryToEditBudget by remember { mutableStateOf<CategoryWithBudgetAndSpent?>(null) }
     var categoryForHistory by remember { mutableStateOf<CategoryEntity?>(null) }
+    var categoryToDelete by remember { mutableStateOf<CategoryEntity?>(null) }
 
     var showAddCategoryDialog by remember { mutableStateOf(false) }
 
@@ -270,6 +271,9 @@ fun BudgetScreen(
                     },
                     onViewHistory = {
                         categoryForHistory = catData.category
+                    },
+                    onDeleteCategory = {
+                        categoryToDelete = catData.category
                     }
                 )
             }
@@ -342,6 +346,47 @@ fun BudgetScreen(
                 viewModel.updateHousehold(name, curr)
                 showHouseholdDialog = false
             }
+        )
+    }
+
+    if (categoryToDelete != null) {
+        val cat = categoryToDelete!!
+        AlertDialog(
+            onDismissRequest = { categoryToDelete = null },
+            title = {
+                Text(
+                    text = "Delete Category?",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete '${cat.name}'? Its planned budget and any associated expenses will be removed.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteCategory(cat)
+                        categoryToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { categoryToDelete = null }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            },
+            containerColor = EmeraldSurface,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 

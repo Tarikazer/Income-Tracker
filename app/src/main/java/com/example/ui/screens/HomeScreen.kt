@@ -28,6 +28,7 @@ import com.example.ui.components.*
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +45,7 @@ fun HomeScreen(
     var showSearch by remember { mutableStateOf(false) }
     var showAddShoppingDialog by remember { mutableStateOf(false) }
     var showHouseholdDialog by remember { mutableStateOf(false) }
+    var expenseToDelete by remember { mutableStateOf<ExpenseEntity?>(null) }
 
     Scaffold(
         modifier = modifier
@@ -304,7 +306,7 @@ fun HomeScreen(
                         expense = expense,
                         currency = household.currency,
                         onItemClick = {},
-                        onDeleteClick = { viewModel.deleteExpense(expense) }
+                        onDeleteClick = { expenseToDelete = expense }
                     )
                 }
             }
@@ -313,6 +315,48 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(72.dp))
             }
         }
+    }
+
+    // Delete Expense Confirmation Dialog
+    if (expenseToDelete != null) {
+        val exp = expenseToDelete!!
+        AlertDialog(
+            onDismissRequest = { expenseToDelete = null },
+            title = {
+                Text(
+                    text = "Delete Expense?",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "Delete '${exp.title}' (${String.format(Locale.US, "%,.2f", exp.amount)} ${household.currency})?",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteExpense(exp)
+                        expenseToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { expenseToDelete = null }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            },
+            containerColor = EmeraldSurface,
+            shape = RoundedCornerShape(20.dp)
+        )
     }
 
     // Add Shopping Expense Dialog for Home Screen (things bought separately, no category selection)

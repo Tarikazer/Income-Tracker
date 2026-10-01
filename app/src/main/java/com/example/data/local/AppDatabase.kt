@@ -63,9 +63,13 @@ abstract class AppDatabase : RoomDatabase() {
                 super.onOpen(db)
                 INSTANCE?.let { database ->
                     scope.launch(Dispatchers.IO) {
-                        // Ensure all estimated/planned amounts are 0.0 on existing databases as well
-                        database.categoryDao().resetAllPlannedAmountsToZero()
-                        database.budgetDao().resetAllBudgetsToZero()
+                        if (database.categoryDao().getCategoryCount() == 0) {
+                            populateInitialData(database)
+                        } else {
+                            // Ensure all estimated/planned amounts are 0.0 on existing databases as well
+                            database.categoryDao().resetAllPlannedAmountsToZero()
+                            database.budgetDao().resetAllBudgetsToZero()
+                        }
                     }
                 }
             }

@@ -15,6 +15,72 @@ class FinanceRepository(
     val primaryHousehold: Flow<HouseholdEntity?> = householdDao.getPrimaryHousehold()
     val allCategories: Flow<List<CategoryEntity>> = categoryDao.getAllCategories()
 
+    suspend fun ensureDefaultData() {
+        if (categoryDao.getCategoryCount() == 0) {
+            val defaultCategories = listOf(
+                CategoryEntity(
+                    id = 1,
+                    name = "Rent",
+                    iconKey = "rent",
+                    isRecurring = true,
+                    defaultPlannedAmount = 0.0,
+                    colorHex = 0xFF10B981
+                ),
+                CategoryEntity(
+                    id = 2,
+                    name = "Sport",
+                    iconKey = "sport",
+                    isRecurring = true,
+                    defaultPlannedAmount = 0.0,
+                    colorHex = 0xFF06B6D4
+                ),
+                CategoryEntity(
+                    id = 3,
+                    name = "Alimentation",
+                    iconKey = "alimentation",
+                    isRecurring = true,
+                    defaultPlannedAmount = 0.0,
+                    colorHex = 0xFFF59E0B
+                ),
+                CategoryEntity(
+                    id = 4,
+                    name = "Water Bill",
+                    iconKey = "water",
+                    isRecurring = true,
+                    defaultPlannedAmount = 0.0,
+                    colorHex = 0xFF3B82F6
+                ),
+                CategoryEntity(
+                    id = 5,
+                    name = "Electricity Bill",
+                    iconKey = "electricity",
+                    isRecurring = true,
+                    defaultPlannedAmount = 0.0,
+                    colorHex = 0xFFEAB308
+                ),
+                CategoryEntity(
+                    id = 6,
+                    name = "Internet Bill",
+                    iconKey = "internet",
+                    isRecurring = true,
+                    defaultPlannedAmount = 0.0,
+                    colorHex = 0xFF8B5CF6
+                ),
+                CategoryEntity(
+                    id = 7,
+                    name = "Family",
+                    iconKey = "family",
+                    isRecurring = true,
+                    defaultPlannedAmount = 0.0,
+                    colorHex = 0xFFEC4899
+                )
+            )
+            categoryDao.insertCategories(defaultCategories)
+        }
+        // Also cleanup any shopping expenses that were mistakenly saved under Alimentation
+        expenseDao.detachShoppingFromAlimentation()
+    }
+
     fun getExpensesForMonth(monthYear: String): Flow<List<ExpenseEntity>> {
         return expenseDao.getExpensesForMonth(monthYear)
     }
@@ -100,6 +166,8 @@ class FinanceRepository(
 
     suspend fun deleteCategory(category: CategoryEntity) {
         categoryDao.deleteCategory(category)
+        budgetDao.deleteBudgetsForCategory(category.id)
+        expenseDao.deleteExpensesForCategory(category.id)
     }
 
     suspend fun addIncome(income: IncomeEntity): Long {
