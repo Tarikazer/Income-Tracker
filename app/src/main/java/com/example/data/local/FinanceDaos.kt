@@ -38,6 +38,9 @@ interface CategoryDao {
 
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun getCategoryCount(): Int
+
+    @Query("UPDATE categories SET defaultPlannedAmount = 0.0")
+    suspend fun resetAllPlannedAmountsToZero()
 }
 
 @Dao
@@ -95,4 +98,7 @@ interface BudgetDao {
 
     @Query("SELECT * FROM budgets WHERE categoryId = :categoryId AND monthYear = :monthYear LIMIT 1")
     suspend fun getBudgetForCategory(categoryId: Long, monthYear: String): BudgetEntity?
+
+    @Query("UPDATE budgets SET plannedAmount = 0.0")
+    suspend fun resetAllBudgetsToZero()
 }

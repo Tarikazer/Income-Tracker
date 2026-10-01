@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
         ExpenseEntity::class,
         BudgetEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -39,6 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "income_control_db"
                 )
+                    .fallbackToDestructiveMigration()
                     .addCallback(DatabaseCallback(scope))
                     .build()
                 INSTANCE = instance
@@ -57,14 +58,23 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 }
             }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                INSTANCE?.let { database ->
+                    scope.launch(Dispatchers.IO) {
+                        // Ensure all estimated/planned amounts are 0.0 on existing databases as well
+                        database.categoryDao().resetAllPlannedAmountsToZero()
+                        database.budgetDao().resetAllBudgetsToZero()
+                    }
+                }
+            }
         }
 
         suspend fun populateInitialData(database: AppDatabase) {
             val householdDao = database.householdDao()
             val categoryDao = database.categoryDao()
             val budgetDao = database.budgetDao()
-            val incomeDao = database.incomeDao()
-            val expenseDao = database.expenseDao()
 
             // 1. Initial Household Tarik
             householdDao.insertHousehold(
@@ -75,15 +85,15 @@ abstract class AppDatabase : RoomDatabase() {
                 )
             )
 
-            // 2. Default Categories matching the screenshots:
-            // Rent, Sport, Alimentation (recurring), Water Bill, Electricity Bill, Internet Bill, Family
+            // 2. Default Categories: Rent, Sport, Alimentation, Water Bill, Electricity Bill, Internet Bill, Family
+            // All initialized with 0.0 estimated/planned amount as requested
             val defaultCategories = listOf(
                 CategoryEntity(
                     id = 1,
                     name = "Rent",
                     iconKey = "rent",
                     isRecurring = true,
-                    defaultPlannedAmount = 3000.0,
+                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF10B981
                 ),
                 CategoryEntity(
@@ -91,7 +101,7 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Sport",
                     iconKey = "sport",
                     isRecurring = true,
-                    defaultPlannedAmount = 300.0,
+                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF06B6D4
                 ),
                 CategoryEntity(
@@ -99,7 +109,7 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Alimentation",
                     iconKey = "alimentation",
                     isRecurring = true,
-                    defaultPlannedAmount = 2500.0,
+                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFFF59E0B
                 ),
                 CategoryEntity(
@@ -107,7 +117,7 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Water Bill",
                     iconKey = "water",
                     isRecurring = true,
-                    defaultPlannedAmount = 150.0,
+                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF3B82F6
                 ),
                 CategoryEntity(
@@ -115,7 +125,7 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Electricity Bill",
                     iconKey = "electricity",
                     isRecurring = true,
-                    defaultPlannedAmount = 250.0,
+                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFFEAB308
                 ),
                 CategoryEntity(
@@ -123,7 +133,7 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Internet Bill",
                     iconKey = "internet",
                     isRecurring = true,
-                    defaultPlannedAmount = 250.0,
+                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF8B5CF6
                 ),
                 CategoryEntity(
@@ -131,102 +141,22 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Family",
                     iconKey = "family",
                     isRecurring = true,
-                    defaultPlannedAmount = 600.0,
+                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFFEC4899
                 )
             )
             categoryDao.insertCategories(defaultCategories)
 
-            // 3. Initial Budgets for current month October 2026
+            // 3. Initial Budgets set to 0.0 for current month October 2026
             val currentMonth = "2026-10"
             val initialBudgets = defaultCategories.map {
                 BudgetEntity(
                     categoryId = it.id,
                     monthYear = currentMonth,
-                    plannedAmount = it.defaultPlannedAmount
+                    plannedAmount = 0.0
                 )
             }
             budgetDao.insertBudgets(initialBudgets)
-
-            // 4. Sample initial Monthly Income (e.g. 12,000 MAD)
-            incomeDao.insertIncome(
-                IncomeEntity(
-                    id = 1,
-                    source = "Main Monthly Income",
-                    amount = 12000.0,
-                    monthYear = currentMonth,
-                    isRecurring = true
-                )
-            )
-
-            // 5. Initial sample everyday shopping expenses mentioned by user
-            // ("fast food you eat outside the house the water bottle and the other things you may get from the super market")
-            val now = System.currentTimeMillis()
-            expenseDao.insertExpense(
-                ExpenseEntity(
-                    title = "Mineral Water Bottle",
-                    amount = 6.0,
-                    categoryId = 3,
-                    categoryName = "Alimentation",
-                    categoryIconKey = "alimentation",
-                    dateTimestamp = now - 3600_000 * 2,
-                    monthYear = currentMonth,
-                    note = "Cold mineral water on the walk",
-                    isRecurring = false
-                )
-            )
-            expenseDao.insertExpense(
-                ExpenseEntity(
-                    title = "Fast Food Burger Outside",
-                    amount = 55.0,
-                    categoryId = 3,
-                    categoryName = "Alimentation",
-                    categoryIconKey = "alimentation",
-                    dateTimestamp = now - 3600_000 * 24,
-                    monthYear = currentMonth,
-                    note = "Dinner outside with friends",
-                    isRecurring = false
-                )
-            )
-            expenseDao.insertExpense(
-                ExpenseEntity(
-                    title = "Supermarket Groceries & Essentials",
-                    amount = 320.0,
-                    categoryId = 3,
-                    categoryName = "Alimentation",
-                    categoryIconKey = "alimentation",
-                    dateTimestamp = now - 3600_000 * 48,
-                    monthYear = currentMonth,
-                    note = "Weekly groceries, fruits & coffee",
-                    isRecurring = false
-                )
-            )
-            expenseDao.insertExpense(
-                ExpenseEntity(
-                    title = "Gym Monthly Subscription",
-                    amount = 300.0,
-                    categoryId = 2,
-                    categoryName = "Sport",
-                    categoryIconKey = "sport",
-                    dateTimestamp = now - 3600_000 * 72,
-                    monthYear = currentMonth,
-                    note = "October fitness pass",
-                    isRecurring = true
-                )
-            )
-            expenseDao.insertExpense(
-                ExpenseEntity(
-                    title = "Fibre Optic Internet Bill",
-                    amount = 250.0,
-                    categoryId = 6,
-                    categoryName = "Internet Bill",
-                    categoryIconKey = "internet",
-                    dateTimestamp = now - 3600_000 * 80,
-                    monthYear = currentMonth,
-                    note = "Home high speed WiFi",
-                    isRecurring = true
-                )
-            )
         }
     }
 }
