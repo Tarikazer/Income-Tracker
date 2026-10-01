@@ -1,0 +1,6 @@
+{
+  "name": "Income Control",
+  "description": "Control your life income, manage household budgets, track recurring and daily expenses in real-time, and analyze spending trends.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
