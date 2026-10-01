@@ -275,6 +275,7 @@ fun HomeScreen(
                                     .background(Color(0xFF1B382F)),
                                 contentAlignment = Alignment.Center
                             ) {
+                                @Suppress("DEPRECATION")
                                 Icon(
                                     imageVector = Icons.Rounded.ReceiptLong,
                                     contentDescription = null,

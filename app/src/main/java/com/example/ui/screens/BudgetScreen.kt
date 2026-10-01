@@ -121,6 +121,7 @@ fun BudgetScreen(
                             .size(48.dp)
                             .testTag("budget_trends_icon")
                     ) {
+                        @Suppress("DEPRECATION")
                         Icon(
                             imageVector = Icons.Rounded.ShowChart,
                             contentDescription = "Interactive charts & reports",
@@ -427,6 +428,7 @@ private fun IncomeRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                @Suppress("DEPRECATION")
                 Icon(
                     imageVector = Icons.Rounded.TrendingUp,
                     contentDescription = null,

@@ -387,32 +387,50 @@ fun AddShoppingExpenseDialog(
                         .testTag("shopping_title_input")
                 )
 
-                // Quick item suggestion chips
-                Row(
+                // Quick item suggestion chips with wrapping flow
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        .padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val suggestions = listOf("Water bottle", "Fast food", "Coffee", "Supermarket")
+                    val suggestions = listOf(
+                        "Breakfast",
+                        "Lunch",
+                        "Dinner",
+                        "Drinks",
+                        "Supermarket",
+                        "Water bottle",
+                        "Coffee",
+                        "Fast food",
+                        "Groceries",
+                        "Snacks"
+                    )
                     suggestions.forEach { suggestion ->
+                        val isSelected = title.equals(suggestion, ignoreCase = true)
                         Surface(
                             onClick = {
                                 title = suggestion
                                 errorMessage = null
                             },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (title == suggestion) MintButtonColor else Color(0xFF1E3A30),
-                            border = BorderStroke(1.dp, Color(0xFF285040))
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MintButtonColor else Color(0xFF1B362D),
+                            border = BorderStroke(
+                                1.dp,
+                                if (isSelected) MintButtonColor else Color(0xFF2B5244)
+                            )
                         ) {
                             Text(
                                 text = suggestion,
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = if (title == suggestion) Color(0xFF03241A) else TextSecondary,
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Medium
+                                    color = if (isSelected) Color(0xFF03241A) else TextPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 ),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                                softWrap = true,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                             )
                         }
                     }
@@ -467,11 +485,11 @@ fun AddShoppingExpenseDialog(
                 )
 
                 if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = errorMessage!!,
                         color = AccentRed,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
                     )
                 }
 
@@ -497,16 +515,16 @@ fun AddShoppingExpenseDialog(
 
                     Button(
                         onClick = {
-                            val amount = amountText.toDoubleOrNull()
+                            val cleanAmount = amountText.replace(',', '.').trim().toDoubleOrNull()
                             if (title.isBlank()) {
-                                errorMessage = "Please enter what you bought."
+                                errorMessage = "Please enter or pick what you bought."
                                 return@Button
                             }
-                            if (amount == null || amount <= 0) {
-                                errorMessage = "Please enter a valid amount."
+                            if (cleanAmount == null || cleanAmount <= 0) {
+                                errorMessage = "Please enter a valid amount (e.g. 25.50)."
                                 return@Button
                             }
-                            onSave(title, amount, note)
+                            onSave(title.trim(), cleanAmount, note.trim())
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MintButtonColor,

@@ -173,6 +173,7 @@ fun StatisticsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        @Suppress("DEPRECATION")
                         MetricCard(
                             title = "Total Inflow",
                             value = formatCurrency(summary.totalIncome, household.currency),
@@ -181,6 +182,7 @@ fun StatisticsScreen(
                             accentColor = Color(0xFF6EE7B7),
                             modifier = Modifier.weight(1f)
                         )
+                        @Suppress("DEPRECATION")
                         MetricCard(
                             title = "Total Outflow",
                             value = formatCurrency(summary.totalSpent, household.currency),
