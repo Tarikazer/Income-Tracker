@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.CategoryEntity
+import com.example.data.model.ExpenseEntity
 import com.example.ui.theme.*
+import com.example.util.AppConstants
 
 // Mint color from user screenshots
 val MintButtonColor = Color(0xFF7DE0BA)
@@ -387,14 +391,14 @@ fun AddShoppingExpenseDialog(
                         .testTag("shopping_title_input")
                 )
 
-                // Quick item suggestion chips with wrapping flow
+                // Quick item suggestion chips with compact wrapping flow
                 @OptIn(ExperimentalLayoutApi::class)
                 FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     val suggestions = listOf(
                         "Breakfast",
@@ -415,28 +419,28 @@ fun AddShoppingExpenseDialog(
                                 title = suggestion
                                 errorMessage = null
                             },
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(8.dp),
                             color = if (isSelected) MintButtonColor else Color(0xFF1B362D),
                             border = BorderStroke(
                                 1.dp,
-                                if (isSelected) MintButtonColor else Color(0xFF2B5244)
+                                if (isSelected) MintButtonColor else Color(0xFF284C3E)
                             )
                         ) {
                             Text(
                                 text = suggestion,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = if (isSelected) Color(0xFF03241A) else TextPrimary,
-                                    fontSize = 12.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 ),
                                 softWrap = true,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
                     value = amountText,
@@ -750,3 +754,436 @@ fun HouseholdDialog(
         }
     }
 }
+
+@Composable
+fun EditShoppingExpenseDialog(
+    expense: ExpenseEntity,
+    currency: String,
+    onDismiss: () -> Unit,
+    onSave: (title: String, amount: Double, note: String) -> Unit
+) {
+    var title by remember { mutableStateOf(expense.title) }
+    var amountText by remember {
+        mutableStateOf(
+            if (expense.amount == expense.amount.toLong().toDouble())
+                expense.amount.toLong().toString()
+            else
+                String.format(java.util.Locale.US, "%.2f", expense.amount)
+        )
+    }
+    var note by remember { mutableStateOf(expense.note) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val remainingMinutes = AppConstants.remainingExpenseMinutes(expense.dateTimestamp)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(22.dp),
+            color = DialogSurfaceColor,
+            border = BorderStroke(1.dp, DialogBorderColor),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .testTag("edit_shopping_expense_dialog")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(22.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Edit Purchase",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                            fontSize = 20.sp
+                        )
+                    )
+                    Text(
+                        text = "$remainingMinutes min left",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = EmeraldCyan,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = {
+                        title = it
+                        errorMessage = null
+                    },
+                    label = { Text("Item Name") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = MintButtonColor,
+                        unfocusedBorderColor = Color(0xFF354B42),
+                        focusedLabelColor = MintButtonColor,
+                        unfocusedLabelColor = TextSecondary,
+                        cursorColor = MintButtonColor
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = {
+                        amountText = it
+                        errorMessage = null
+                    },
+                    label = { Text(currency) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = MintButtonColor,
+                        unfocusedBorderColor = Color(0xFF354B42),
+                        focusedLabelColor = MintButtonColor,
+                        unfocusedLabelColor = TextSecondary,
+                        cursorColor = MintButtonColor
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    placeholder = { Text("Note (optional)") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = MintButtonColor,
+                        unfocusedBorderColor = Color(0xFF354B42),
+                        focusedPlaceholderColor = TextMuted,
+                        unfocusedPlaceholderColor = TextMuted,
+                        cursorColor = MintButtonColor
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage!!,
+                        color = AccentRed,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel", color = TextPrimary)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = {
+                            val cleanAmount = amountText.replace(',', '.').trim().toDoubleOrNull()
+                            if (title.isBlank()) {
+                                errorMessage = "Please enter an item name."
+                                return@Button
+                            }
+                            if (cleanAmount == null || cleanAmount <= 0) {
+                                errorMessage = "Please enter a valid amount."
+                                return@Button
+                            }
+                            onSave(title.trim(), cleanAmount, note.trim())
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MintButtonColor,
+                            contentColor = MintButtonTextColor
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text("Update", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditRentPriceDialog(
+    currentPrice: Double,
+    currency: String,
+    lastUpdatedTimestamp: Long,
+    onDismiss: () -> Unit,
+    onSave: (newPrice: Double) -> Unit
+) {
+    var priceText by remember {
+        mutableStateOf(
+            if (currentPrice > 0) {
+                if (currentPrice == currentPrice.toLong().toDouble())
+                    currentPrice.toLong().toString()
+                else
+                    String.format(java.util.Locale.US, "%.2f", currentPrice)
+            } else ""
+        )
+    }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val isEditable = AppConstants.isRentEditable(lastUpdatedTimestamp)
+    val remainingHours = AppConstants.remainingRentHours(lastUpdatedTimestamp)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(22.dp),
+            color = DialogSurfaceColor,
+            border = BorderStroke(1.dp, DialogBorderColor),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .testTag("edit_rent_price_dialog")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(22.dp)
+            ) {
+                Text(
+                    text = "Edit Rent Price",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                        fontSize = 20.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (isEditable) {
+                    Text(
+                        text = "Editable for $remainingHours hours after creation/change.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = EmeraldCyan,
+                            fontSize = 12.sp
+                        )
+                    )
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Lock,
+                            contentDescription = null,
+                            tint = AccentRed,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Rent price is locked (24 hours window expired).",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = AccentRed,
+                                fontSize = 12.sp
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedTextField(
+                    value = priceText,
+                    onValueChange = {
+                        priceText = it
+                        errorMessage = null
+                    },
+                    enabled = isEditable,
+                    label = { Text("Rent Price ($currency)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = MintButtonColor,
+                        unfocusedBorderColor = Color(0xFF354B42),
+                        focusedLabelColor = MintButtonColor,
+                        unfocusedLabelColor = TextSecondary,
+                        cursorColor = MintButtonColor
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage!!,
+                        color = AccentRed,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Close", color = TextPrimary)
+                    }
+
+                    if (isEditable) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                val cleanPrice = priceText.replace(',', '.').trim().toDoubleOrNull()
+                                if (cleanPrice == null || cleanPrice < 0) {
+                                    errorMessage = "Please enter a valid price."
+                                    return@Button
+                                }
+                                onSave(cleanPrice)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MintButtonColor,
+                                contentColor = MintButtonTextColor
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text("Save", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReorderCategoryDialog(
+    category: CategoryEntity,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(22.dp),
+            color = DialogSurfaceColor,
+            border = BorderStroke(1.dp, DialogBorderColor),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .testTag("reorder_category_dialog")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                Text(
+                    text = "Reorder ${category.name}",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        fontSize = 18.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Move this category up or down in your budget list:",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            onMoveUp()
+                            onDismiss()
+                        },
+                        enabled = canMoveUp,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E3A30),
+                            contentColor = EmeraldPrimaryLight,
+                            disabledContainerColor = Color(0xFF15221D),
+                            disabledContentColor = TextMuted
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowUpward,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Move Up")
+                    }
+
+                    Button(
+                        onClick = {
+                            onMoveDown()
+                            onDismiss()
+                        },
+                        enabled = canMoveDown,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1E3A30),
+                            contentColor = EmeraldPrimaryLight,
+                            disabledContainerColor = Color(0xFF15221D),
+                            disabledContentColor = TextMuted
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowDownward,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Move Down")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Done", color = TextPrimary)
+                    }
+                }
+            }
+        }
+    }
+}
+

@@ -8,13 +8,12 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.AppDatabase
 import com.example.data.repository.FinanceRepository
+import com.example.ui.screens.AppLoadingScreen
 import com.example.ui.screens.BudgetScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.StatisticsScreen
@@ -23,6 +22,7 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import com.example.ui.viewmodel.FinanceViewModelFactory
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,8 +46,15 @@ class MainActivity : ComponentActivity() {
 
                 val currentScreen by viewModel.currentScreen.collectAsState()
 
+                var isAppLoading by remember { mutableStateOf(true) }
+
+                LaunchedEffect(Unit) {
+                    delay(1000L)
+                    isAppLoading = false
+                }
+
                 // Hardware / gesture back handling
-                BackHandler(enabled = currentScreen != AppScreen.HOME) {
+                BackHandler(enabled = !isAppLoading && currentScreen != AppScreen.HOME) {
                     viewModel.navigateBack()
                 }
 
@@ -55,15 +62,19 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = EmeraldBackground
                 ) {
-                    Crossfade(
-                        targetState = currentScreen,
-                        animationSpec = tween(250),
-                        label = "screen_crossfade"
-                    ) { screen ->
-                        when (screen) {
-                            AppScreen.HOME -> HomeScreen(viewModel = viewModel)
-                            AppScreen.BUDGET -> BudgetScreen(viewModel = viewModel)
-                            AppScreen.STATISTICS -> StatisticsScreen(viewModel = viewModel)
+                    if (isAppLoading) {
+                        AppLoadingScreen()
+                    } else {
+                        Crossfade(
+                            targetState = currentScreen,
+                            animationSpec = tween(250),
+                            label = "screen_crossfade"
+                        ) { screen ->
+                            when (screen) {
+                                AppScreen.HOME -> HomeScreen(viewModel = viewModel)
+                                AppScreen.BUDGET -> BudgetScreen(viewModel = viewModel)
+                                AppScreen.STATISTICS -> StatisticsScreen(viewModel = viewModel)
+                            }
                         }
                     }
                 }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.model.*
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
         ExpenseEntity::class,
         BudgetEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,6 +33,14 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE categories ADD COLUMN displayOrder INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE categories ADD COLUMN rentPrice REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE categories ADD COLUMN rentLastUpdated INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -39,6 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "income_control_db"
                 )
+                    .addMigrations(MIGRATION_2_3)
                     .fallbackToDestructiveMigration()
                     .addCallback(DatabaseCallback(scope))
                     .build()
@@ -65,10 +75,6 @@ abstract class AppDatabase : RoomDatabase() {
                     scope.launch(Dispatchers.IO) {
                         if (database.categoryDao().getCategoryCount() == 0) {
                             populateInitialData(database)
-                        } else {
-                            // Ensure all estimated/planned amounts are 0.0 on existing databases as well
-                            database.categoryDao().resetAllPlannedAmountsToZero()
-                            database.budgetDao().resetAllBudgetsToZero()
                         }
                     }
                 }
@@ -98,7 +104,10 @@ abstract class AppDatabase : RoomDatabase() {
                     iconKey = "rent",
                     isRecurring = true,
                     defaultPlannedAmount = 0.0,
-                    colorHex = 0xFF10B981
+                    colorHex = 0xFF10B981,
+                    displayOrder = 0,
+                    rentPrice = 0.0,
+                    rentLastUpdated = System.currentTimeMillis()
                 ),
                 CategoryEntity(
                     id = 2,
@@ -106,7 +115,8 @@ abstract class AppDatabase : RoomDatabase() {
                     iconKey = "sport",
                     isRecurring = true,
                     defaultPlannedAmount = 0.0,
-                    colorHex = 0xFF06B6D4
+                    colorHex = 0xFF06B6D4,
+                    displayOrder = 1
                 ),
                 CategoryEntity(
                     id = 3,
@@ -114,7 +124,8 @@ abstract class AppDatabase : RoomDatabase() {
                     iconKey = "alimentation",
                     isRecurring = true,
                     defaultPlannedAmount = 0.0,
-                    colorHex = 0xFFF59E0B
+                    colorHex = 0xFFF59E0B,
+                    displayOrder = 2
                 ),
                 CategoryEntity(
                     id = 4,
@@ -122,7 +133,8 @@ abstract class AppDatabase : RoomDatabase() {
                     iconKey = "water",
                     isRecurring = true,
                     defaultPlannedAmount = 0.0,
-                    colorHex = 0xFF3B82F6
+                    colorHex = 0xFF3B82F6,
+                    displayOrder = 3
                 ),
                 CategoryEntity(
                     id = 5,
@@ -130,7 +142,8 @@ abstract class AppDatabase : RoomDatabase() {
                     iconKey = "electricity",
                     isRecurring = true,
                     defaultPlannedAmount = 0.0,
-                    colorHex = 0xFFEAB308
+                    colorHex = 0xFFEAB308,
+                    displayOrder = 4
                 ),
                 CategoryEntity(
                     id = 6,
@@ -138,7 +151,8 @@ abstract class AppDatabase : RoomDatabase() {
                     iconKey = "internet",
                     isRecurring = true,
                     defaultPlannedAmount = 0.0,
-                    colorHex = 0xFF8B5CF6
+                    colorHex = 0xFF8B5CF6,
+                    displayOrder = 5
                 ),
                 CategoryEntity(
                     id = 7,
@@ -146,7 +160,8 @@ abstract class AppDatabase : RoomDatabase() {
                     iconKey = "family",
                     isRecurring = true,
                     defaultPlannedAmount = 0.0,
-                    colorHex = 0xFFEC4899
+                    colorHex = 0xFFEC4899,
+                    displayOrder = 6
                 )
             )
             categoryDao.insertCategories(defaultCategories)

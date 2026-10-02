@@ -49,6 +49,8 @@ fun BudgetScreen(
     var categoryToEditBudget by remember { mutableStateOf<CategoryWithBudgetAndSpent?>(null) }
     var categoryForHistory by remember { mutableStateOf<CategoryEntity?>(null) }
     var categoryToDelete by remember { mutableStateOf<CategoryEntity?>(null) }
+    var categoryToReorder by remember { mutableStateOf<CategoryEntity?>(null) }
+    var rentCategoryToEdit by remember { mutableStateOf<CategoryWithBudgetAndSpent?>(null) }
 
     var showAddCategoryDialog by remember { mutableStateOf(false) }
 
@@ -273,6 +275,12 @@ fun BudgetScreen(
                     onViewHistory = {
                         categoryForHistory = catData.category
                     },
+                    onReorder = {
+                        categoryToReorder = catData.category
+                    },
+                    onEditRentPrice = {
+                        rentCategoryToEdit = catData
+                    },
                     onDeleteCategory = {
                         categoryToDelete = catData.category
                     }
@@ -388,6 +396,34 @@ fun BudgetScreen(
             },
             containerColor = EmeraldSurface,
             shape = RoundedCornerShape(20.dp)
+        )
+    }
+
+    if (categoryToReorder != null) {
+        val cat = categoryToReorder!!
+        val index = categoryProgressList.indexOfFirst { it.category.id == cat.id }
+        ReorderCategoryDialog(
+            category = cat,
+            canMoveUp = index > 0,
+            canMoveDown = index in 0 until categoryProgressList.size - 1,
+            onMoveUp = { viewModel.moveCategoryUp(cat) },
+            onMoveDown = { viewModel.moveCategoryDown(cat) },
+            onDismiss = { categoryToReorder = null }
+        )
+    }
+
+    if (rentCategoryToEdit != null) {
+        val catData = rentCategoryToEdit!!
+        val currentPrice = if (catData.category.rentPrice > 0) catData.category.rentPrice else catData.spentAmount
+        EditRentPriceDialog(
+            currentPrice = currentPrice,
+            currency = household.currency,
+            lastUpdatedTimestamp = catData.category.rentLastUpdated,
+            onDismiss = { rentCategoryToEdit = null },
+            onSave = { newPrice ->
+                viewModel.updateRentPrice(catData.category.id, newPrice)
+                rentCategoryToEdit = null
+            }
         )
     }
 

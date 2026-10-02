@@ -89,6 +89,19 @@ class FinanceViewModel(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    val swipeableSpendingSummary: StateFlow<SwipeableSpendingSummary> = _selectedMonthYear
+        .flatMapLatest { month -> repository.getSwipeableSpendingSummary(month) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = SwipeableSpendingSummary(
+                monthSpending = PeriodSpending("Total spent this month", 0.0, 0.0, 0.0, "than last month"),
+                weekSpending = PeriodSpending("Total spent this week", 0.0, 0.0, 0.0, "than last week"),
+                todaySpending = PeriodSpending("Total spent today", 0.0, 0.0, 0.0, "than yesterday")
+            )
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val monthlyIncomes: StateFlow<List<IncomeEntity>> = _selectedMonthYear
         .flatMapLatest { month -> repository.getIncomesForMonth(month) }
         .stateIn(
@@ -383,6 +396,36 @@ class FinanceViewModel(
     fun deleteCategory(category: CategoryEntity) {
         viewModelScope.launch {
             repository.deleteCategory(category)
+        }
+    }
+
+    fun moveCategoryUp(category: CategoryEntity) {
+        viewModelScope.launch {
+            repository.moveCategoryUp(category)
+        }
+    }
+
+    fun moveCategoryDown(category: CategoryEntity) {
+        viewModelScope.launch {
+            repository.moveCategoryDown(category)
+        }
+    }
+
+    fun updateRentPrice(categoryId: Long, price: Double) {
+        viewModelScope.launch {
+            repository.updateRentPrice(categoryId, price, _selectedMonthYear.value)
+        }
+    }
+
+    fun updateShoppingExpense(expense: ExpenseEntity, newTitle: String, newAmount: Double, newNote: String) {
+        viewModelScope.launch {
+            repository.updateExpense(
+                expense.copy(
+                    title = newTitle.trim(),
+                    amount = newAmount,
+                    note = newNote.trim()
+                )
+            )
         }
     }
 

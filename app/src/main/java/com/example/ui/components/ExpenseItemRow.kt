@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ExpenseEntity
 import com.example.ui.theme.*
+import com.example.util.AppConstants
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,7 +32,8 @@ import java.util.*
 fun ExpenseItemRow(
     expense: ExpenseEntity,
     currency: String,
-    onItemClick: () -> Unit,
+    onItemClick: () -> Unit = {},
+    onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -40,6 +44,9 @@ fun ExpenseItemRow(
         ""
     }
 
+    // 10-minute edit window based on stored creation timestamp
+    val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
+
     // Never display "Alimentation" for separate shopping items on Home Screen
     val showCategory = expense.categoryName.isNotBlank() &&
             !expense.categoryName.equals("Alimentation", ignoreCase = true) &&
@@ -48,7 +55,9 @@ fun ExpenseItemRow(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onItemClick() }
+            .clickable {
+                if (isEditable) onEditClick() else onItemClick()
+            }
             .testTag("expense_row_${expense.id}"),
         shape = RoundedCornerShape(18.dp),
         color = Color(0xFF11221C),
@@ -150,7 +159,7 @@ fun ExpenseItemRow(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = "- ${String.format(Locale.US, "%,.2f", expense.amount)} $currency",
@@ -159,20 +168,52 @@ fun ExpenseItemRow(
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     ),
-                    modifier = Modifier.testTag("expense_amount_${expense.id}")
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .testTag("expense_amount_${expense.id}")
                 )
+
+                // 10-minute edit window: editable shows Edit button, locked shows Lock icon
+                if (isEditable) {
+                    IconButton(
+                        onClick = onEditClick,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .testTag("edit_expense_${expense.id}")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = "Edit purchase (10m window)",
+                            tint = EmeraldPrimaryLight,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Lock,
+                            contentDescription = "Editing locked after 10m",
+                            tint = TextMuted,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
 
                 IconButton(
                     onClick = onDeleteClick,
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(34.dp)
                         .testTag("delete_expense_${expense.id}")
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.DeleteOutline,
                         contentDescription = "Delete expense",
                         tint = TextMuted,
-                        modifier = Modifier.size(19.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

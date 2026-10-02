@@ -21,8 +21,11 @@ interface HouseholdDao {
 
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM categories ORDER BY id ASC")
+    @Query("SELECT * FROM categories ORDER BY displayOrder ASC, id ASC")
     fun getAllCategories(): Flow<List<CategoryEntity>>
+
+    @Query("SELECT * FROM categories ORDER BY displayOrder ASC, id ASC")
+    suspend fun getCategoriesList(): List<CategoryEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategory(category: CategoryEntity): Long
@@ -32,6 +35,15 @@ interface CategoryDao {
 
     @Update
     suspend fun updateCategory(category: CategoryEntity)
+
+    @Query("UPDATE categories SET displayOrder = :order WHERE id = :id")
+    suspend fun updateCategoryOrder(id: Long, order: Int)
+
+    @Query("UPDATE categories SET rentPrice = :price, rentLastUpdated = :timestamp WHERE id = :id")
+    suspend fun updateRentPrice(id: Long, price: Double, timestamp: Long)
+
+    @Query("UPDATE categories SET defaultPlannedAmount = :planned WHERE id = :id")
+    suspend fun updateDefaultPlannedAmount(id: Long, planned: Double)
 
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)

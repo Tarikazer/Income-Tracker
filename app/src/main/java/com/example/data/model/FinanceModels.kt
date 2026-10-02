@@ -19,7 +19,10 @@ data class CategoryEntity(
     val isRecurring: Boolean = true,
     val defaultPlannedAmount: Double = 0.0,
     val colorHex: Long = 0xFF10B981,
-    val householdId: Long = 1
+    val householdId: Long = 1,
+    val displayOrder: Int = 0,
+    val rentPrice: Double = 0.0,
+    val rentLastUpdated: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "incomes")
@@ -72,4 +75,18 @@ data class MonthlyFinanceSummary(
     val shoppingSpent: Double, // Day-to-day shopping and quick expenses
     val plannedRemaining: Double,
     val actualRemaining: Double
+)
+
+data class PeriodSpending(
+    val title: String,
+    val currentAmount: Double,
+    val previousAmount: Double,
+    val diffAmount: Double,
+    val periodLabel: String
+)
+
+data class SwipeableSpendingSummary(
+    val monthSpending: PeriodSpending,
+    val weekSpending: PeriodSpending,
+    val todaySpending: PeriodSpending
 )

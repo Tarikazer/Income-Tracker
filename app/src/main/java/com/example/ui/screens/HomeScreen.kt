@@ -39,6 +39,7 @@ fun HomeScreen(
     val household by viewModel.household.collectAsState()
     val monthYear by viewModel.selectedMonthYear.collectAsState()
     val summary by viewModel.monthlySummary.collectAsState()
+    val swipeableSummary by viewModel.swipeableSpendingSummary.collectAsState()
     val expenses by viewModel.filteredExpenses.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
@@ -46,6 +47,7 @@ fun HomeScreen(
     var showAddShoppingDialog by remember { mutableStateOf(false) }
     var showHouseholdDialog by remember { mutableStateOf(false) }
     var expenseToDelete by remember { mutableStateOf<ExpenseEntity?>(null) }
+    var expenseToEdit by remember { mutableStateOf<ExpenseEntity?>(null) }
 
     Scaffold(
         modifier = modifier
@@ -216,10 +218,10 @@ fun HomeScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Top Summary Card (Made more compact per request)
+            // Swipeable Summary Card (Month, Week, Today with diff vs previous period)
             item {
-                HomeSpendingCard(
-                    totalSpent = summary.shoppingSpent,
+                SwipeableHomeSpendingCard(
+                    summary = swipeableSummary,
                     currency = household.currency,
                     modifier = Modifier.padding(top = 2.dp)
                 )
@@ -306,7 +308,8 @@ fun HomeScreen(
                     ExpenseItemRow(
                         expense = expense,
                         currency = household.currency,
-                        onItemClick = {},
+                        onItemClick = { expenseToEdit = expense },
+                        onEditClick = { expenseToEdit = expense },
                         onDeleteClick = { expenseToDelete = expense }
                     )
                 }
@@ -316,6 +319,20 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(72.dp))
             }
         }
+    }
+
+    // Edit Shopping Expense Dialog (within 10-minute window)
+    if (expenseToEdit != null) {
+        val exp = expenseToEdit!!
+        EditShoppingExpenseDialog(
+            expense = exp,
+            currency = household.currency,
+            onDismiss = { expenseToEdit = null },
+            onSave = { newTitle, newAmount, newNote ->
+                viewModel.updateShoppingExpense(exp, newTitle, newAmount, newNote)
+                expenseToEdit = null
+            }
+        )
     }
 
     // Delete Expense Confirmation Dialog

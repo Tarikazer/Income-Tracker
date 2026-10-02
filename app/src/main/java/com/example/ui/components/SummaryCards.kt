@@ -2,6 +2,8 @@ package com.example.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -13,11 +15,151 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.model.SwipeableSpendingSummary
 import com.example.ui.theme.*
 import java.util.Locale
+import kotlin.math.abs
 
 fun formatCurrency(amount: Double, currency: String = "MAD"): String {
     return String.format(Locale.US, "%,.2f %s", amount, currency)
+}
+
+@Composable
+fun SwipeableHomeSpendingCard(
+    summary: SwipeableSpendingSummary,
+    currency: String,
+    modifier: Modifier = Modifier
+) {
+    val pages = listOf(
+        summary.monthSpending,
+        summary.weekSpending,
+        summary.todaySpending
+    )
+    val pagerState = rememberPagerState(pageCount = { pages.size })
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(SummaryCardGradient)
+            .padding(horizontal = 16.dp, vertical = 13.dp)
+            .testTag("swipeable_home_spending_card")
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth()
+            ) { pageIndex ->
+                val page = pages[pageIndex]
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = page.title,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                color = Color(0xFFC7EAE1),
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 13.5.sp
+                            )
+                        )
+
+                        Text(
+                            text = formatCurrency(page.currentAmount, currency),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 17.sp
+                            ),
+                            modifier = Modifier.testTag("spending_amount_page_$pageIndex")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(5.dp))
+
+                    // Comparison vs previous period: arrow + color
+                    val diff = page.diffAmount
+                    val absDiff = abs(diff)
+                    val formattedDiff = formatCurrency(absDiff, currency)
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (diff > 0.009) {
+                            // Spent MORE than previous period: Red with ▲
+                            Text(
+                                text = "▲ $formattedDiff more ${page.periodLabel}",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color(0xFFFF6B6B),
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp
+                                )
+                            )
+                        } else if (diff < -0.009) {
+                            // Spent LESS than previous period: Green with ▼
+                            Text(
+                                text = "▼ $formattedDiff less ${page.periodLabel}",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color(0xFF7DE0BA),
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp
+                                )
+                            )
+                        } else {
+                            Text(
+                                text = "• Equal to previous period",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color(0xFFA1CFC3),
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 12.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Text(
+                        text = "Shopping-list purchases only",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color(0x99A1CFC3),
+                            fontSize = 11.sp
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Page indicator dots
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(pages.size) { index ->
+                    val isSelected = pagerState.currentPage == index
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 3.dp)
+                            .size(
+                                width = if (isSelected) 14.dp else 6.dp,
+                                height = 6.dp
+                            )
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(if (isSelected) Color(0xFF7DE0BA) else Color(0x55A1CFC3))
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -65,7 +207,7 @@ fun HomeSpendingCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "This only covers shopping lists, see Budget and Statistics for your full spending.",
+                text = "Shopping-list purchases only",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = Color(0xFFA1CFC3),
                     fontSize = 11.5.sp,
