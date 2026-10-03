@@ -221,9 +221,7 @@ fun HomeSpendingCard(
 @Composable
 fun BudgetSummaryCard(
     totalIncome: Double,
-    totalPlanned: Double,
     totalSpent: Double,
-    plannedRemaining: Double,
     actualRemaining: Double,
     currency: String,
     modifier: Modifier = Modifier
@@ -238,13 +236,12 @@ fun BudgetSummaryCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             BudgetRow(label = "Total income", value = totalIncome, currency = currency)
-            BudgetRow(label = "Total planned", value = totalPlanned, currency = currency)
             BudgetRow(label = "Total spent", value = totalSpent, currency = currency)
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             HorizontalDivider(
                 color = Color(0x33FFFFFF),
                 thickness = 1.dp,
@@ -252,18 +249,10 @@ fun BudgetSummaryCard(
             )
 
             BudgetRow(
-                label = "Planned remaining",
-                value = plannedRemaining,
-                currency = currency,
-                highlightColor = EmeraldPrimaryLight,
-                isBold = true
-            )
-
-            BudgetRow(
-                label = "Actual remaining",
+                label = "Remaining balance",
                 value = actualRemaining,
                 currency = currency,
-                highlightColor = EmeraldCyan,
+                highlightColor = if (actualRemaining >= 0) EmeraldCyan else AccentRed,
                 isBold = true
             )
         }

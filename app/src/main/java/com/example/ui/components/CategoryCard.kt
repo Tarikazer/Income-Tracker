@@ -19,47 +19,27 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.CategoryWithBudgetAndSpent
+import com.example.data.model.CategoryWithSpent
 import com.example.ui.theme.*
-import com.example.util.AppConstants
 import java.util.Locale
 
 @Composable
 fun CategoryCard(
-    categoryData: CategoryWithBudgetAndSpent,
+    categoryData: CategoryWithSpent,
     currency: String,
     onAddExpense: () -> Unit,
-    onEditBudget: () -> Unit,
     onViewHistory: () -> Unit,
     onReorder: () -> Unit,
-    onEditRentPrice: () -> Unit,
     onDeleteCategory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val category = categoryData.category
-    val planned = categoryData.plannedAmount
     val spent = categoryData.spentAmount
-
-    val isRent = category.name.equals("Rent", ignoreCase = true) || category.iconKey == "rent"
-    val isRentEditable = if (isRent) AppConstants.isRentEditable(category.rentLastUpdated) else true
-
-    val progressFraction = if (planned > 0) {
-        (spent / planned).toFloat().coerceIn(0f, 1f)
-    } else if (spent > 0) {
-        1f
-    } else {
-        0f
-    }
-
-    val progressColor = when {
-        spent > planned && planned > 0 -> AccentRed
-        progressFraction > 0.85f -> AccentAmber
-        else -> EmeraldPrimary
-    }
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .clickable { onViewHistory() }
             .testTag("category_card_${category.name.lowercase().replace(" ", "_")}"),
         shape = RoundedCornerShape(20.dp),
         color = Color(0xFF11221C),
@@ -78,7 +58,7 @@ fun CategoryCard(
                 )
                 .padding(16.dp)
         ) {
-            // Header Row: Icon, Name, (Lock icon if rent locked / Edit icon if rent editable), Action icons
+            // Header Row: Icon, Name, Action icons (History, Reorder, Delete)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -87,11 +67,7 @@ fun CategoryCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .then(
-                            if (isRent) Modifier.clickable { onEditRentPrice() } else Modifier
-                        )
+                    modifier = Modifier.weight(1f)
                 ) {
                     Box(
                         modifier = Modifier
@@ -108,32 +84,22 @@ fun CategoryCard(
                         )
                     }
 
-                    Text(
-                        text = category.name,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp,
-                            color = TextPrimary
+                    Column {
+                        Text(
+                            text = category.name,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp,
+                                color = TextPrimary
+                            )
                         )
-                    )
-
-                    // Rent 24-hour edit lock indicator
-                    if (isRent) {
-                        if (isRentEditable) {
-                            Icon(
-                                imageVector = Icons.Rounded.Edit,
-                                contentDescription = "Rent price editable (24h window)",
-                                tint = EmeraldCyan,
-                                modifier = Modifier.size(14.dp)
+                        Text(
+                            text = "${categoryData.expensesCount} transaction${if (categoryData.expensesCount == 1) "" else "s"}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextSecondary,
+                                fontSize = 11.5.sp
                             )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Rounded.Lock,
-                                contentDescription = "Rent price locked (24h window expired)",
-                                tint = TextMuted,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        }
+                        )
                     }
                 }
 
@@ -189,52 +155,29 @@ fun CategoryCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Progress bar
-            LinearProgressIndicator(
-                progress = { progressFraction },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = progressColor,
-                trackColor = Color(0xFF1E332B),
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Bottom Row: Spent / Planned on left (tap to edit planned budget), + Add expense pill button on right
+            // Bottom Row: Total spent on left, + Add expense pill button on right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Tapping "spent / planned" text opens planned budget edit dialog
-                Surface(
-                    onClick = onEditBudget,
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color.Transparent,
-                    modifier = Modifier.testTag("budget_progress_text_${category.id}")
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 2.dp)
-                    ) {
-                        Text(
-                            text = "${String.format(Locale.US, "%,.2f", spent)} / ${String.format(Locale.US, "%,.2f", planned)} $currency",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = TextSecondary,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                Column {
+                    Text(
+                        text = "Total spent",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextMuted,
+                            fontSize = 11.5.sp
                         )
-                        Icon(
-                            imageVector = Icons.Rounded.Edit,
-                            contentDescription = "Edit planned amount",
-                            tint = Color(0x77A1CFC3),
-                            modifier = Modifier.size(12.dp)
-                        )
-                    }
+                    )
+                    Text(
+                        text = "${String.format(Locale.US, "%,.2f", spent)} $currency",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = Color.White,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier.testTag("spent_text_${category.id}")
+                    )
                 }
 
                 // "+ Add expense" pill button

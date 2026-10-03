@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CategoryEntity
-import com.example.data.model.CategoryWithBudgetAndSpent
 import com.example.data.model.ExpenseEntity
 import com.example.data.model.IncomeEntity
 import com.example.ui.components.*
@@ -46,11 +45,11 @@ fun BudgetScreen(
     var categoryForAddExpense by remember { mutableStateOf<CategoryEntity?>(null) }
     var showHouseholdDialog by remember { mutableStateOf(false) }
 
-    var categoryToEditBudget by remember { mutableStateOf<CategoryWithBudgetAndSpent?>(null) }
     var categoryForHistory by remember { mutableStateOf<CategoryEntity?>(null) }
     var categoryToDelete by remember { mutableStateOf<CategoryEntity?>(null) }
     var categoryToReorder by remember { mutableStateOf<CategoryEntity?>(null) }
-    var rentCategoryToEdit by remember { mutableStateOf<CategoryWithBudgetAndSpent?>(null) }
+    var expenseToEdit by remember { mutableStateOf<ExpenseEntity?>(null) }
+    var expenseToDelete by remember { mutableStateOf<ExpenseEntity?>(null) }
 
     var showAddCategoryDialog by remember { mutableStateOf(false) }
 
@@ -153,9 +152,7 @@ fun BudgetScreen(
             item {
                 BudgetSummaryCard(
                     totalIncome = summary.totalIncome,
-                    totalPlanned = summary.totalPlanned,
                     totalSpent = summary.totalSpent,
-                    plannedRemaining = summary.plannedRemaining,
                     actualRemaining = summary.actualRemaining,
                     currency = household.currency,
                     modifier = Modifier.padding(top = 4.dp)
@@ -269,17 +266,11 @@ fun BudgetScreen(
                     onAddExpense = {
                         categoryForAddExpense = catData.category
                     },
-                    onEditBudget = {
-                        categoryToEditBudget = catData
-                    },
                     onViewHistory = {
                         categoryForHistory = catData.category
                     },
                     onReorder = {
                         categoryToReorder = catData.category
-                    },
-                    onEditRentPrice = {
-                        rentCategoryToEdit = catData
                     },
                     onDeleteCategory = {
                         categoryToDelete = catData.category
@@ -320,20 +311,6 @@ fun BudgetScreen(
         )
     }
 
-    if (categoryToEditBudget != null) {
-        val cat = categoryToEditBudget!!
-        EditBudgetDialog(
-            categoryName = cat.category.name,
-            currentBudget = cat.plannedAmount,
-            currency = household.currency,
-            onDismiss = { categoryToEditBudget = null },
-            onSave = { newAmount ->
-                viewModel.setCategoryBudget(cat.category.id, newAmount)
-                categoryToEditBudget = null
-            }
-        )
-    }
-
     if (categoryForHistory != null) {
         val cat = categoryForHistory!!
         val catExpenses = currentMonthExpenses.filter { it.categoryId == cat.id }
@@ -342,7 +319,64 @@ fun BudgetScreen(
             expenses = catExpenses,
             currency = household.currency,
             onDismiss = { categoryForHistory = null },
-            onDeleteExpense = { viewModel.deleteExpense(it) }
+            onEditExpense = { expenseToEdit = it },
+            onDeleteExpense = { expenseToDelete = it }
+        )
+    }
+
+    // Edit Transaction Dialog for category transactions
+    if (expenseToEdit != null) {
+        val exp = expenseToEdit!!
+        EditShoppingExpenseDialog(
+            expense = exp,
+            currency = household.currency,
+            onDismiss = { expenseToEdit = null },
+            onSave = { newTitle, newAmount, newNote ->
+                viewModel.updateShoppingExpense(exp, newTitle, newAmount, newNote)
+                expenseToEdit = null
+            }
+        )
+    }
+
+    // Delete Expense Confirmation Dialog
+    if (expenseToDelete != null) {
+        val exp = expenseToDelete!!
+        AlertDialog(
+            onDismissRequest = { expenseToDelete = null },
+            title = {
+                Text(
+                    text = "Delete Expense?",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "Delete '${exp.title}' (${String.format(Locale.US, "%,.2f", exp.amount)} ${household.currency})?",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteExpense(exp)
+                        expenseToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { expenseToDelete = null }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            },
+            containerColor = EmeraldSurface,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
@@ -373,7 +407,7 @@ fun BudgetScreen(
             },
             text = {
                 Text(
-                    text = "Are you sure you want to delete '${cat.name}'? Its planned budget and any associated expenses will be removed.",
+                    text = "Are you sure you want to delete '${cat.name}'? All its associated expenses will be removed.",
                     style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
                 )
             },
@@ -412,27 +446,12 @@ fun BudgetScreen(
         )
     }
 
-    if (rentCategoryToEdit != null) {
-        val catData = rentCategoryToEdit!!
-        val currentPrice = if (catData.category.rentPrice > 0) catData.category.rentPrice else catData.spentAmount
-        EditRentPriceDialog(
-            currentPrice = currentPrice,
-            currency = household.currency,
-            lastUpdatedTimestamp = catData.category.rentLastUpdated,
-            onDismiss = { rentCategoryToEdit = null },
-            onSave = { newPrice ->
-                viewModel.updateRentPrice(catData.category.id, newPrice)
-                rentCategoryToEdit = null
-            }
-        )
-    }
-
     if (showAddCategoryDialog) {
         AddCategoryDialog(
             currency = household.currency,
             onDismiss = { showAddCategoryDialog = false },
-            onSave = { name, iconKey, plannedAmount ->
-                viewModel.addNewCategory(name, iconKey, plannedAmount)
+            onSave = { name, iconKey ->
+                viewModel.addNewCategory(name, iconKey)
                 showAddCategoryDialog = false
             }
         )
@@ -523,10 +542,9 @@ private fun IncomeRow(
 private fun AddCategoryDialog(
     currency: String,
     onDismiss: () -> Unit,
-    onSave: (name: String, iconKey: String, planned: Double) -> Unit
+    onSave: (name: String, iconKey: String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var plannedText by remember { mutableStateOf("") }
     var selectedIconKey by remember { mutableStateOf("other") }
 
     val iconOptions = listOf(
@@ -575,25 +593,7 @@ private fun AddCategoryDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = plannedText,
-                    onValueChange = { plannedText = it },
-                    label = { Text("Monthly Planned Budget ($currency)") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = EmeraldPrimary,
-                        unfocusedBorderColor = EmeraldCardBorder,
-                        focusedLabelColor = EmeraldPrimary,
-                        unfocusedLabelColor = TextSecondary
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
                     text = "Select Icon",
@@ -638,9 +638,8 @@ private fun AddCategoryDialog(
 
                 Button(
                     onClick = {
-                        val planned = plannedText.toDoubleOrNull() ?: 0.0
                         if (name.isNotBlank()) {
-                            onSave(name, selectedIconKey, planned)
+                            onSave(name.trim(), selectedIconKey)
                         }
                     },
                     modifier = Modifier

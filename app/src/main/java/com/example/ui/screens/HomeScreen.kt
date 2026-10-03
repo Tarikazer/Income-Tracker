@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CategoryEntity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import com.example.data.model.ExpenseEntity
 import com.example.ui.components.*
 import com.example.ui.theme.*
@@ -30,7 +31,7 @@ import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: FinanceViewModel,
@@ -41,6 +42,7 @@ fun HomeScreen(
     val summary by viewModel.monthlySummary.collectAsState()
     val swipeableSummary by viewModel.swipeableSpendingSummary.collectAsState()
     val expenses by viewModel.filteredExpenses.collectAsState()
+    val groupedExpenses by viewModel.groupedExpenses.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
     var showSearch by remember { mutableStateOf(false) }
@@ -304,14 +306,50 @@ fun HomeScreen(
                     }
                 }
             } else {
-                items(expenses, key = { it.id }) { expense ->
-                    ExpenseItemRow(
-                        expense = expense,
-                        currency = household.currency,
-                        onItemClick = { expenseToEdit = expense },
-                        onEditClick = { expenseToEdit = expense },
-                        onDeleteClick = { expenseToDelete = expense }
-                    )
+                groupedExpenses.forEach { group ->
+                    stickyHeader(key = "header_${group.dayKey}") {
+                        Surface(
+                            color = Color(0xFF0C1914).copy(alpha = 0.96f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = group.dayTitle,
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        color = EmeraldCyan,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.5.sp
+                                    )
+                                )
+                                Text(
+                                    text = "${String.format(Locale.US, "%,.2f", group.dayTotal)} ${household.currency}",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = Color(0xFFC7EAE1),
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    items(group.expenses, key = { it.id }) { expense ->
+                        ExpenseItemRow(
+                            expense = expense,
+                            currency = household.currency,
+                            onItemClick = { expenseToEdit = expense },
+                            onEditClick = { expenseToEdit = expense },
+                            onDeleteClick = { expenseToDelete = expense }
+                        )
+                    }
                 }
             }
 
@@ -321,7 +359,7 @@ fun HomeScreen(
         }
     }
 
-    // Edit Shopping Expense Dialog (within 10-minute window)
+    // Edit Shopping Expense Dialog (within 24-hour window)
     if (expenseToEdit != null) {
         val exp = expenseToEdit!!
         EditShoppingExpenseDialog(

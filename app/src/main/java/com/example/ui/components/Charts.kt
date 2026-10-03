@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.CategoryWithBudgetAndSpent
+import com.example.data.model.CategoryWithSpent
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.CategoryExpenseBreakdown
 import com.example.ui.viewmodel.DailySpendPoint
@@ -455,15 +455,16 @@ fun DailySpendingTrendChart(
 }
 
 @Composable
-fun BudgetVsActualReport(
-    categoryProgress: List<CategoryWithBudgetAndSpent>,
+fun CategorySpendingReport(
+    categoryProgress: List<CategoryWithSpent>,
     currency: String,
     modifier: Modifier = Modifier
 ) {
+    val totalSpent = categoryProgress.sumOf { it.spentAmount }
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .testTag("budget_vs_actual_report"),
+            .testTag("category_spending_report"),
         shape = RoundedCornerShape(20.dp),
         color = EmeraldSurface,
         border = BorderStroke(1.dp, EmeraldCardBorder)
@@ -474,7 +475,7 @@ fun BudgetVsActualReport(
                 .padding(18.dp)
         ) {
             Text(
-                text = "Budget Adherence & Planned vs Actual",
+                text = "Category Spending Breakdown",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary,
@@ -482,7 +483,7 @@ fun BudgetVsActualReport(
                 )
             )
             Text(
-                text = "Performance across categorized allowances",
+                text = "Actual spending across all categories",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = TextSecondary,
                     fontSize = 12.sp
@@ -495,13 +496,8 @@ fun BudgetVsActualReport(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 categoryProgress.forEach { item ->
-                    val ratio = if (item.plannedAmount > 0) item.spentAmount / item.plannedAmount else 0.0
+                    val ratio = if (totalSpent > 0) item.spentAmount / totalSpent else 0.0
                     val pct = (ratio * 100).toInt()
-                    val statusColor = when {
-                        ratio > 1.0 -> AccentRed
-                        ratio > 0.85 -> AccentAmber
-                        else -> EmeraldPrimary
-                    }
 
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Row(
@@ -519,9 +515,9 @@ fun BudgetVsActualReport(
                             )
 
                             Text(
-                                text = "$pct% ($ratio)",
+                                text = "$pct%",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = statusColor,
+                                    color = EmeraldPrimaryLight,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp
                                 )
@@ -536,7 +532,7 @@ fun BudgetVsActualReport(
                                 .fillMaxWidth()
                                 .height(6.dp)
                                 .clip(RoundedCornerShape(3.dp)),
-                            color = statusColor,
+                            color = Color(item.category.colorHex),
                             trackColor = Color(0xFF20372F)
                         )
 
@@ -547,16 +543,16 @@ fun BudgetVsActualReport(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Spent: ${String.format(Locale.US, "%,.2f", item.spentAmount)} $currency",
+                                text = "${item.expensesCount} transaction${if (item.expensesCount == 1) "" else "s"}",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TextSecondary,
+                                    color = TextMuted,
                                     fontSize = 11.sp
                                 )
                             )
                             Text(
-                                text = "Budget: ${String.format(Locale.US, "%,.2f", item.plannedAmount)} $currency",
+                                text = "Spent: ${String.format(Locale.US, "%,.2f", item.spentAmount)} $currency",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TextMuted,
+                                    color = TextSecondary,
                                     fontSize = 11.sp
                                 )
                             )

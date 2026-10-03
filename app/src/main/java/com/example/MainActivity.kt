@@ -36,8 +36,7 @@ class MainActivity : ComponentActivity() {
                     householdDao = database.householdDao(),
                     categoryDao = database.categoryDao(),
                     incomeDao = database.incomeDao(),
-                    expenseDao = database.expenseDao(),
-                    budgetDao = database.budgetDao()
+                    expenseDao = database.expenseDao()
                 )
 
                 val viewModel: FinanceViewModel = viewModel(

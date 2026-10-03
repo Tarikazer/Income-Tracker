@@ -39,20 +39,11 @@ interface CategoryDao {
     @Query("UPDATE categories SET displayOrder = :order WHERE id = :id")
     suspend fun updateCategoryOrder(id: Long, order: Int)
 
-    @Query("UPDATE categories SET rentPrice = :price, rentLastUpdated = :timestamp WHERE id = :id")
-    suspend fun updateRentPrice(id: Long, price: Double, timestamp: Long)
-
-    @Query("UPDATE categories SET defaultPlannedAmount = :planned WHERE id = :id")
-    suspend fun updateDefaultPlannedAmount(id: Long, planned: Double)
-
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
 
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun getCategoryCount(): Int
-
-    @Query("UPDATE categories SET defaultPlannedAmount = 0.0")
-    suspend fun resetAllPlannedAmountsToZero()
 }
 
 @Dao
@@ -101,25 +92,4 @@ interface ExpenseDao {
 
     @Query("UPDATE expenses SET categoryId = 0, categoryName = 'Separate Purchase', categoryIconKey = 'shopping' WHERE isRecurring = 0 AND (categoryName = 'Alimentation' OR categoryId = 3)")
     suspend fun detachShoppingFromAlimentation()
-}
-
-@Dao
-interface BudgetDao {
-    @Query("SELECT * FROM budgets WHERE monthYear = :monthYear")
-    fun getBudgetsForMonth(monthYear: String): Flow<List<BudgetEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBudget(budget: BudgetEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBudgets(budgets: List<BudgetEntity>)
-
-    @Query("SELECT * FROM budgets WHERE categoryId = :categoryId AND monthYear = :monthYear LIMIT 1")
-    suspend fun getBudgetForCategory(categoryId: Long, monthYear: String): BudgetEntity?
-
-    @Query("DELETE FROM budgets WHERE categoryId = :categoryId")
-    suspend fun deleteBudgetsForCategory(categoryId: Long)
-
-    @Query("UPDATE budgets SET plannedAmount = 0.0")
-    suspend fun resetAllBudgetsToZero()
 }

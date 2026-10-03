@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.model.*
 import kotlinx.coroutines.CoroutineScope
@@ -16,10 +15,9 @@ import kotlinx.coroutines.launch
         HouseholdEntity::class,
         CategoryEntity::class,
         IncomeEntity::class,
-        ExpenseEntity::class,
-        BudgetEntity::class
+        ExpenseEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,19 +25,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun incomeDao(): IncomeDao
     abstract fun expenseDao(): ExpenseDao
-    abstract fun budgetDao(): BudgetDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
-
-        val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE categories ADD COLUMN displayOrder INTEGER NOT NULL DEFAULT 0")
-                db.execSQL("ALTER TABLE categories ADD COLUMN rentPrice REAL NOT NULL DEFAULT 0.0")
-                db.execSQL("ALTER TABLE categories ADD COLUMN rentLastUpdated INTEGER NOT NULL DEFAULT 0")
-            }
-        }
 
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -48,7 +37,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "income_control_db"
                 )
-                    .addMigrations(MIGRATION_2_3)
                     .fallbackToDestructiveMigration()
                     .addCallback(DatabaseCallback(scope))
                     .build()
@@ -84,7 +72,6 @@ abstract class AppDatabase : RoomDatabase() {
         suspend fun populateInitialData(database: AppDatabase) {
             val householdDao = database.householdDao()
             val categoryDao = database.categoryDao()
-            val budgetDao = database.budgetDao()
 
             // 1. Initial Household Tarik
             householdDao.insertHousehold(
@@ -96,25 +83,20 @@ abstract class AppDatabase : RoomDatabase() {
             )
 
             // 2. Default Categories: Rent, Sport, Alimentation, Water Bill, Electricity Bill, Internet Bill, Family
-            // All initialized with 0.0 estimated/planned amount as requested
             val defaultCategories = listOf(
                 CategoryEntity(
                     id = 1,
                     name = "Rent",
                     iconKey = "rent",
                     isRecurring = true,
-                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF10B981,
-                    displayOrder = 0,
-                    rentPrice = 0.0,
-                    rentLastUpdated = System.currentTimeMillis()
+                    displayOrder = 0
                 ),
                 CategoryEntity(
                     id = 2,
                     name = "Sport",
                     iconKey = "sport",
                     isRecurring = true,
-                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF06B6D4,
                     displayOrder = 1
                 ),
@@ -123,7 +105,6 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Alimentation",
                     iconKey = "alimentation",
                     isRecurring = true,
-                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFFF59E0B,
                     displayOrder = 2
                 ),
@@ -132,7 +113,6 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Water Bill",
                     iconKey = "water",
                     isRecurring = true,
-                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF3B82F6,
                     displayOrder = 3
                 ),
@@ -141,7 +121,6 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Electricity Bill",
                     iconKey = "electricity",
                     isRecurring = true,
-                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFFEAB308,
                     displayOrder = 4
                 ),
@@ -150,7 +129,6 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Internet Bill",
                     iconKey = "internet",
                     isRecurring = true,
-                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFF8B5CF6,
                     displayOrder = 5
                 ),
@@ -159,23 +137,11 @@ abstract class AppDatabase : RoomDatabase() {
                     name = "Family",
                     iconKey = "family",
                     isRecurring = true,
-                    defaultPlannedAmount = 0.0,
                     colorHex = 0xFFEC4899,
                     displayOrder = 6
                 )
             )
             categoryDao.insertCategories(defaultCategories)
-
-            // 3. Initial Budgets set to 0.0 for current month October 2026
-            val currentMonth = "2026-10"
-            val initialBudgets = defaultCategories.map {
-                BudgetEntity(
-                    categoryId = it.id,
-                    monthYear = currentMonth,
-                    plannedAmount = 0.0
-                )
-            }
-            budgetDao.insertBudgets(initialBudgets)
         }
     }
 }

@@ -100,7 +100,6 @@ fun StatisticsScreen(
                                 appendLine("📊 Monthly Financial Report - ${FinanceViewModel.formatMonthYearDisplay(monthYear)}")
                                 appendLine("Household: ${household.name}")
                                 appendLine("• Total Income: ${formatCurrency(summary.totalIncome, household.currency)}")
-                                appendLine("• Total Planned: ${formatCurrency(summary.totalPlanned, household.currency)}")
                                 appendLine("• Total Spent: ${formatCurrency(summary.totalSpent, household.currency)}")
                                 appendLine("• Net Savings: ${formatCurrency(savings, household.currency)} ($savingsRate%)")
                                 appendLine("\nCategory Breakdown:")
@@ -188,7 +187,7 @@ fun StatisticsScreen(
                             value = formatCurrency(summary.totalSpent, household.currency),
                             subtitle = "All expenses",
                             icon = Icons.Rounded.TrendingDown,
-                            accentColor = if (summary.totalSpent > summary.totalPlanned && summary.totalPlanned > 0) AccentRed else Color(0xFFFBBF24),
+                            accentColor = if (summary.totalSpent > summary.totalIncome && summary.totalIncome > 0) AccentRed else Color(0xFFFBBF24),
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -211,9 +210,9 @@ fun StatisticsScreen(
                 )
             }
 
-            // Budget Adherence & Planned vs Actual
+            // Category Spending Breakdown
             item {
-                BudgetVsActualReport(
+                CategorySpendingReport(
                     categoryProgress = categoryProgressList,
                     currency = household.currency
                 )

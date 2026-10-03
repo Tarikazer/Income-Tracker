@@ -17,12 +17,9 @@ data class CategoryEntity(
     val name: String,
     val iconKey: String, // "rent", "sport", "alimentation", "water", "electricity", "internet", "family", "transport", "other"
     val isRecurring: Boolean = true,
-    val defaultPlannedAmount: Double = 0.0,
     val colorHex: Long = 0xFF10B981,
     val householdId: Long = 1,
-    val displayOrder: Int = 0,
-    val rentPrice: Double = 0.0,
-    val rentLastUpdated: Long = System.currentTimeMillis()
+    val displayOrder: Int = 0
 )
 
 @Entity(tableName = "incomes")
@@ -49,20 +46,12 @@ data class ExpenseEntity(
     val note: String = "",
     val isRecurring: Boolean = false,
     val householdId: Long = 1
-)
+) {
+    val createdAt: Long get() = dateTimestamp
+}
 
-@Entity(tableName = "budgets")
-data class BudgetEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val categoryId: Long,
-    val monthYear: String, // e.g. "2026-10"
-    val plannedAmount: Double,
-    val householdId: Long = 1
-)
-
-data class CategoryWithBudgetAndSpent(
+data class CategoryWithSpent(
     val category: CategoryEntity,
-    val plannedAmount: Double,
     val spentAmount: Double,
     val expensesCount: Int
 )
@@ -70,11 +59,9 @@ data class CategoryWithBudgetAndSpent(
 data class MonthlyFinanceSummary(
     val monthYear: String,
     val totalIncome: Double,
-    val totalPlanned: Double,
     val totalSpent: Double,
     val shoppingSpent: Double, // Day-to-day shopping and quick expenses
-    val plannedRemaining: Double,
-    val actualRemaining: Double
+    val actualRemaining: Double // totalIncome - totalSpent
 )
 
 data class PeriodSpending(
@@ -89,4 +76,11 @@ data class SwipeableSpendingSummary(
     val monthSpending: PeriodSpending,
     val weekSpending: PeriodSpending,
     val todaySpending: PeriodSpending
+)
+
+data class DailyExpenseGroup(
+    val dayKey: String,
+    val dayTitle: String,
+    val dayTotal: Double,
+    val expenses: List<ExpenseEntity>
 )

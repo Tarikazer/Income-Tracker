@@ -1,7 +1,6 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +27,7 @@ fun CategoryHistoryDialog(
     expenses: List<ExpenseEntity>,
     currency: String,
     onDismiss: () -> Unit,
+    onEditExpense: (ExpenseEntity) -> Unit = {},
     onDeleteExpense: (ExpenseEntity) -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -104,7 +104,8 @@ fun CategoryHistoryDialog(
                             ExpenseItemRow(
                                 expense = expense,
                                 currency = currency,
-                                onItemClick = {},
+                                onItemClick = { onEditExpense(expense) },
+                                onEditClick = { onEditExpense(expense) },
                                 onDeleteClick = { onDeleteExpense(expense) }
                             )
                         }

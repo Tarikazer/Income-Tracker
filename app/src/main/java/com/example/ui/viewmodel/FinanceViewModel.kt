@@ -80,10 +80,8 @@ class FinanceViewModel(
             initialValue = MonthlyFinanceSummary(
                 monthYear = getCurrentMonthYear(),
                 totalIncome = 0.0,
-                totalPlanned = 0.0,
                 totalSpent = 0.0,
                 shoppingSpent = 0.0,
-                plannedRemaining = 0.0,
                 actualRemaining = 0.0
             )
         )
@@ -111,8 +109,8 @@ class FinanceViewModel(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val categoryProgressList: StateFlow<List<CategoryWithBudgetAndSpent>> = _selectedMonthYear
-        .flatMapLatest { month -> repository.getCategoryProgressForMonth(month) }
+    val categoryProgressList: StateFlow<List<CategoryWithSpent>> = _selectedMonthYear
+        .flatMapLatest { month -> repository.getCategorySpendingForMonth(month) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -148,6 +146,15 @@ class FinanceViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+
+    // Grouped purchases by day for sticky day headers
+    val groupedExpenses: StateFlow<List<DailyExpenseGroup>> = filteredExpenses
+        .map { expenses -> groupExpensesByDay(expenses) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     // Statistics computations
     val categoryBreakdown: StateFlow<List<CategoryExpenseBreakdown>> = combine(
@@ -411,12 +418,6 @@ class FinanceViewModel(
         }
     }
 
-    fun updateRentPrice(categoryId: Long, price: Double) {
-        viewModelScope.launch {
-            repository.updateRentPrice(categoryId, price, _selectedMonthYear.value)
-        }
-    }
-
     fun updateShoppingExpense(expense: ExpenseEntity, newTitle: String, newAmount: Double, newNote: String) {
         viewModelScope.launch {
             repository.updateExpense(
@@ -429,12 +430,6 @@ class FinanceViewModel(
         }
     }
 
-    fun setCategoryBudget(categoryId: Long, amount: Double) {
-        viewModelScope.launch {
-            repository.setCategoryBudget(categoryId, _selectedMonthYear.value, amount)
-        }
-    }
-
     fun updateHousehold(name: String, currency: String = "MAD") {
         viewModelScope.launch {
             val currentH = household.value
@@ -442,21 +437,48 @@ class FinanceViewModel(
         }
     }
 
-    fun addNewCategory(name: String, iconKey: String, plannedAmount: Double, isRecurring: Boolean = true) {
+    fun addNewCategory(name: String, iconKey: String, isRecurring: Boolean = true) {
         viewModelScope.launch {
-            val id = repository.addCategory(
+            repository.addCategory(
                 CategoryEntity(
                     name = name.trim(),
                     iconKey = iconKey,
-                    isRecurring = isRecurring,
-                    defaultPlannedAmount = plannedAmount
+                    isRecurring = isRecurring
                 )
             )
-            repository.setCategoryBudget(id, _selectedMonthYear.value, plannedAmount)
         }
     }
 
     companion object {
+        fun groupExpensesByDay(expenses: List<ExpenseEntity>): List<DailyExpenseGroup> {
+            val sorted = expenses.sortedByDescending { it.dateTimestamp }
+            val dayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val displayFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
+
+            val todayKey = dayFormat.format(Date())
+            val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+            val yesterdayKey = dayFormat.format(cal.time)
+
+            return sorted.groupBy { dayFormat.format(Date(it.dateTimestamp)) }
+                .map { (key, dayExpenses) ->
+                    val title = when (key) {
+                        todayKey -> "Today"
+                        yesterdayKey -> "Yesterday"
+                        else -> {
+                            val firstDate = Date(dayExpenses.first().dateTimestamp)
+                            displayFormat.format(firstDate)
+                        }
+                    }
+                    val total = dayExpenses.sumOf { it.amount }
+                    DailyExpenseGroup(
+                        dayKey = key,
+                        dayTitle = title,
+                        dayTotal = total,
+                        expenses = dayExpenses
+                    )
+                }
+        }
+
         fun getCurrentMonthYear(): String {
             val sdf = SimpleDateFormat("yyyy-MM", Locale.US)
             return sdf.format(Date())

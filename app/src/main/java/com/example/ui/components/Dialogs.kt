@@ -553,103 +553,6 @@ fun AddShoppingExpenseDialog(
 }
 
 @Composable
-fun EditBudgetDialog(
-    categoryName: String,
-    currentBudget: Double,
-    currency: String,
-    onDismiss: () -> Unit,
-    onSave: (amount: Double) -> Unit
-) {
-    var amountText by remember { mutableStateOf(currentBudget.toInt().toString()) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-                .testTag("edit_budget_dialog")
-        ) {
-            Column(modifier = Modifier.padding(22.dp)) {
-                Text(
-                    text = "Planned budget for $categoryName",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                        fontSize = 18.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = amountText,
-                    onValueChange = {
-                        amountText = it
-                        errorMessage = null
-                    },
-                    label = { Text(currency) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("edit_budget_input")
-                )
-
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = errorMessage!!, color = AccentRed, style = MaterialTheme.typography.bodySmall)
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = TextPrimary)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            val amount = amountText.toDoubleOrNull()
-                            if (amount == null || amount < 0) {
-                                errorMessage = "Please enter a valid amount."
-                                return@Button
-                            }
-                            onSave(amount)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MintButtonColor,
-                            contentColor = MintButtonTextColor
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.testTag("save_budget_button")
-                    ) {
-                        Text("Save", fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun HouseholdDialog(
     currentName: String,
     currentCurrency: String,
@@ -773,7 +676,7 @@ fun EditShoppingExpenseDialog(
     }
     var note by remember { mutableStateOf(expense.note) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    val remainingMinutes = AppConstants.remainingExpenseMinutes(expense.dateTimestamp)
+    val remainingHours = AppConstants.remainingHours(expense.dateTimestamp)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -796,7 +699,7 @@ fun EditShoppingExpenseDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Edit Purchase",
+                        text = "Edit Transaction",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
@@ -804,7 +707,7 @@ fun EditShoppingExpenseDialog(
                         )
                     )
                     Text(
-                        text = "$remainingMinutes min left",
+                        text = "$remainingHours h left to edit",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = EmeraldCyan,
                             fontSize = 11.5.sp,
@@ -821,7 +724,7 @@ fun EditShoppingExpenseDialog(
                         title = it
                         errorMessage = null
                     },
-                    label = { Text("Item Name") },
+                    label = { Text("Title / Item Name") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
@@ -922,154 +825,6 @@ fun EditShoppingExpenseDialog(
                         shape = RoundedCornerShape(20.dp)
                     ) {
                         Text("Update", fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EditRentPriceDialog(
-    currentPrice: Double,
-    currency: String,
-    lastUpdatedTimestamp: Long,
-    onDismiss: () -> Unit,
-    onSave: (newPrice: Double) -> Unit
-) {
-    var priceText by remember {
-        mutableStateOf(
-            if (currentPrice > 0) {
-                if (currentPrice == currentPrice.toLong().toDouble())
-                    currentPrice.toLong().toString()
-                else
-                    String.format(java.util.Locale.US, "%.2f", currentPrice)
-            } else ""
-        )
-    }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val isEditable = AppConstants.isRentEditable(lastUpdatedTimestamp)
-    val remainingHours = AppConstants.remainingRentHours(lastUpdatedTimestamp)
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-                .testTag("edit_rent_price_dialog")
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(22.dp)
-            ) {
-                Text(
-                    text = "Edit Rent Price",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                        fontSize = 20.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                if (isEditable) {
-                    Text(
-                        text = "Editable for $remainingHours hours after creation/change.",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = EmeraldCyan,
-                            fontSize = 12.sp
-                        )
-                    )
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Lock,
-                            contentDescription = null,
-                            tint = AccentRed,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = "Rent price is locked (24 hours window expired).",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = AccentRed,
-                                fontSize = 12.sp
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                OutlinedTextField(
-                    value = priceText,
-                    onValueChange = {
-                        priceText = it
-                        errorMessage = null
-                    },
-                    enabled = isEditable,
-                    label = { Text("Rent Price ($currency)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = errorMessage!!,
-                        color = AccentRed,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Close", color = TextPrimary)
-                    }
-
-                    if (isEditable) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                val cleanPrice = priceText.replace(',', '.').trim().toDoubleOrNull()
-                                if (cleanPrice == null || cleanPrice < 0) {
-                                    errorMessage = "Please enter a valid price."
-                                    return@Button
-                                }
-                                onSave(cleanPrice)
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MintButtonColor,
-                                contentColor = MintButtonTextColor
-                            ),
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            Text("Save", fontWeight = FontWeight.SemiBold)
-                        }
                     }
                 }
             }

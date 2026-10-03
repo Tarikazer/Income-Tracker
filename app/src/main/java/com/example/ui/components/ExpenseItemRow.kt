@@ -44,7 +44,7 @@ fun ExpenseItemRow(
         ""
     }
 
-    // 10-minute edit window based on stored creation timestamp
+    // 24-hour edit/delete window based on stored creation timestamp for all items
     val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
 
     // Never display "Alimentation" for separate shopping items on Home Screen
@@ -173,7 +173,7 @@ fun ExpenseItemRow(
                         .testTag("expense_amount_${expense.id}")
                 )
 
-                // 10-minute edit window: editable shows Edit button, locked shows Lock icon
+                // 24-hour window for ALL items: within 24h shows Edit & Delete buttons; after 24h shows Lock icon only
                 if (isEditable) {
                     IconButton(
                         onClick = onEditClick,
@@ -183,9 +183,23 @@ fun ExpenseItemRow(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Edit,
-                            contentDescription = "Edit purchase (10m window)",
+                            contentDescription = "Edit item (24h window)",
                             tint = EmeraldPrimaryLight,
                             modifier = Modifier.size(17.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onDeleteClick,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .testTag("delete_expense_${expense.id}")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.DeleteOutline,
+                            contentDescription = "Delete expense",
+                            tint = TextMuted,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 } else {
@@ -196,25 +210,11 @@ fun ExpenseItemRow(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Lock,
-                            contentDescription = "Editing locked after 10m",
+                            contentDescription = "Editing and deletion locked after 24h",
                             tint = TextMuted,
                             modifier = Modifier.size(15.dp)
                         )
                     }
-                }
-
-                IconButton(
-                    onClick = onDeleteClick,
-                    modifier = Modifier
-                        .size(34.dp)
-                        .testTag("delete_expense_${expense.id}")
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.DeleteOutline,
-                        contentDescription = "Delete expense",
-                        tint = TextMuted,
-                        modifier = Modifier.size(18.dp)
-                    )
                 }
             }
         }
