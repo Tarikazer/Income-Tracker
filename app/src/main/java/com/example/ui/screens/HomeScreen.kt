@@ -29,6 +29,7 @@ import com.example.ui.components.*
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
+import com.example.util.AppConstants
 import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -342,12 +343,25 @@ fun HomeScreen(
                     }
 
                     items(group.expenses, key = { it.id }) { expense ->
+                        val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
                         ExpenseItemRow(
                             expense = expense,
                             currency = household.currency,
-                            onItemClick = { expenseToEdit = expense },
-                            onEditClick = { expenseToEdit = expense },
-                            onDeleteClick = { expenseToDelete = expense }
+                            onItemClick = {
+                                if (isEditable) {
+                                    expenseToEdit = expense
+                                }
+                            },
+                            onEditClick = {
+                                if (isEditable) {
+                                    expenseToEdit = expense
+                                }
+                            },
+                            onDeleteClick = {
+                                if (isEditable) {
+                                    expenseToDelete = expense
+                                }
+                            }
                         )
                     }
                 }
@@ -420,8 +434,8 @@ fun HomeScreen(
         AddShoppingExpenseDialog(
             currency = household.currency,
             onDismiss = { showAddShoppingDialog = false },
-            onSave = { title, amount, note ->
-                viewModel.addShoppingExpense(title, amount, note)
+            onSave = { title, amount, note, timestamp ->
+                viewModel.addShoppingExpense(title, amount, note, timestamp)
                 showAddShoppingDialog = false
             }
         )

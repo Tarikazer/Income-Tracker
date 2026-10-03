@@ -14,16 +14,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.CategoryEntity
 import com.example.data.model.ExpenseEntity
 import com.example.ui.theme.*
 import com.example.util.AppConstants
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 // Mint color from user screenshots
 val MintButtonColor = Color(0xFF7DE0BA)
@@ -335,21 +341,29 @@ fun AddCategoryExpenseDialog(
 fun AddShoppingExpenseDialog(
     currency: String,
     onDismiss: () -> Unit,
-    onSave: (title: String, amount: Double, note: String) -> Unit
+    onSave: (title: String, amount: Double, note: String, timestamp: Long) -> Unit
 ) {
+    val context = LocalContext.current
     var title by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
+    var selectedTimestamp by remember { mutableStateOf(System.currentTimeMillis()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Dialog(onDismissRequest = onDismiss) {
+    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.US) }
+    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.US) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
             shape = RoundedCornerShape(22.dp),
             color = DialogSurfaceColor,
             border = BorderStroke(1.dp, DialogBorderColor),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 20.dp)
                 .testTag("add_shopping_expense_dialog")
         ) {
             Column(
@@ -466,7 +480,166 @@ fun AddShoppingExpenseDialog(
                         .testTag("shopping_amount_input")
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                // Date & Time Picker Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Date & Time",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Date picker button
+                        Surface(
+                            onClick = {
+                                val cal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+                                val datePickerDialog = android.app.DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        val updatedCal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+                                        updatedCal.set(Calendar.YEAR, year)
+                                        updatedCal.set(Calendar.MONTH, month)
+                                        updatedCal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                                        val now = System.currentTimeMillis()
+                                        val newTime = updatedCal.timeInMillis
+                                        selectedTimestamp = if (newTime > now) now else newTime
+                                        errorMessage = null
+                                    },
+                                    cal.get(Calendar.YEAR),
+                                    cal.get(Calendar.MONTH),
+                                    cal.get(Calendar.DAY_OF_MONTH)
+                                )
+                                datePickerDialog.datePicker.maxDate = System.currentTimeMillis()
+                                datePickerDialog.show()
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF13231E),
+                            border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .testTag("pick_purchase_date_button")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.CalendarToday,
+                                    contentDescription = "Pick date",
+                                    tint = MintButtonColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = "Date",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = TextMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = dateFormat.format(Date(selectedTimestamp)),
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.5.sp
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        // Time picker button
+                        Surface(
+                            onClick = {
+                                val cal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+                                val timePickerDialog = android.app.TimePickerDialog(
+                                    context,
+                                    { _, hourOfDay, minute ->
+                                        val updatedCal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+                                        updatedCal.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                                        updatedCal.set(Calendar.MINUTE, minute)
+                                        updatedCal.set(Calendar.SECOND, 0)
+                                        val now = System.currentTimeMillis()
+                                        val newTime = updatedCal.timeInMillis
+                                        if (newTime > now) {
+                                            errorMessage = "Future date/time is not allowed."
+                                        } else {
+                                            selectedTimestamp = newTime
+                                            errorMessage = null
+                                        }
+                                    },
+                                    cal.get(Calendar.HOUR_OF_DAY),
+                                    cal.get(Calendar.MINUTE),
+                                    true
+                                )
+                                timePickerDialog.show()
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF13231E),
+                            border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("pick_purchase_time_button")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Schedule,
+                                    contentDescription = "Pick time",
+                                    tint = MintButtonColor,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = "Time",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = TextMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = timeFormat.format(Date(selectedTimestamp)),
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.5.sp
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    val isBackdated24h = (System.currentTimeMillis() - selectedTimestamp) > (24 * 3600 * 1000L)
+                    if (isBackdated24h) {
+                        Text(
+                            text = "⚠️ Backdated by >24h: purchase will be locked upon saving.",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color(0xFFFBBF24),
+                                fontSize = 11.sp
+                            ),
+                            modifier = Modifier.padding(start = 2.dp, top = 2.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = note,
@@ -497,7 +670,7 @@ fun AddShoppingExpenseDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -528,7 +701,11 @@ fun AddShoppingExpenseDialog(
                                 errorMessage = "Please enter a valid amount (e.g. 25.50)."
                                 return@Button
                             }
-                            onSave(title.trim(), cleanAmount, note.trim())
+                            if (selectedTimestamp > System.currentTimeMillis()) {
+                                errorMessage = "Future date/time is not allowed."
+                                return@Button
+                            }
+                            onSave(title.trim(), cleanAmount, note.trim(), selectedTimestamp)
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MintButtonColor,
@@ -676,7 +853,10 @@ fun EditShoppingExpenseDialog(
     }
     var note by remember { mutableStateOf(expense.note) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.US) }
+    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.US) }
     val remainingHours = AppConstants.remainingHours(expense.dateTimestamp)
+    val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -707,9 +887,9 @@ fun EditShoppingExpenseDialog(
                         )
                     )
                     Text(
-                        text = "$remainingHours h left to edit",
+                        text = if (isEditable) "$remainingHours h left to edit" else "Locked (>24h)",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = EmeraldCyan,
+                            color = if (isEditable) EmeraldCyan else Color(0xFFFBBF24),
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -763,6 +943,109 @@ fun EditShoppingExpenseDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Read-only Date & Time section (disabled fields)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Date & Time (Read-only)",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = dateFormat.format(Date(expense.dateTimestamp)),
+                            onValueChange = {},
+                            enabled = false,
+                            readOnly = true,
+                            label = { Text("Date") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.CalendarToday,
+                                    contentDescription = null,
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Lock,
+                                    contentDescription = "Read-only date",
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = TextSecondary,
+                                disabledBorderColor = Color(0xFF284C3E).copy(alpha = 0.6f),
+                                disabledLabelColor = TextMuted,
+                                disabledLeadingIconColor = TextMuted,
+                                disabledTrailingIconColor = TextMuted,
+                                disabledContainerColor = Color(0xFF101E1A)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .testTag("edit_expense_date_readonly")
+                        )
+
+                        OutlinedTextField(
+                            value = timeFormat.format(Date(expense.dateTimestamp)),
+                            onValueChange = {},
+                            enabled = false,
+                            readOnly = true,
+                            label = { Text("Time") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Schedule,
+                                    contentDescription = null,
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Lock,
+                                    contentDescription = "Read-only time",
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = TextSecondary,
+                                disabledBorderColor = Color(0xFF284C3E).copy(alpha = 0.6f),
+                                disabledLabelColor = TextMuted,
+                                disabledLeadingIconColor = TextMuted,
+                                disabledTrailingIconColor = TextMuted,
+                                disabledContainerColor = Color(0xFF101E1A)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("edit_expense_time_readonly")
+                        )
+                    }
+
+                    Text(
+                        text = "Date and time can only be set when created and cannot be edited.",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        ),
+                        modifier = Modifier.padding(start = 2.dp, top = 2.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
@@ -807,6 +1090,10 @@ fun EditShoppingExpenseDialog(
 
                     Button(
                         onClick = {
+                            if (!isEditable) {
+                                errorMessage = "This transaction was backdated or is older than 24 hours and cannot be edited."
+                                return@Button
+                            }
                             val cleanAmount = amountText.replace(',', '.').trim().toDoubleOrNull()
                             if (title.isBlank()) {
                                 errorMessage = "Please enter an item name."
@@ -818,13 +1105,16 @@ fun EditShoppingExpenseDialog(
                             }
                             onSave(title.trim(), cleanAmount, note.trim())
                         },
+                        enabled = isEditable,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MintButtonColor,
-                            contentColor = MintButtonTextColor
+                            contentColor = MintButtonTextColor,
+                            disabledContainerColor = Color(0xFF1B362D),
+                            disabledContentColor = TextMuted
                         ),
                         shape = RoundedCornerShape(20.dp)
                     ) {
-                        Text("Update", fontWeight = FontWeight.SemiBold)
+                        Text(if (isEditable) "Update" else "Locked", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

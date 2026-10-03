@@ -21,6 +21,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.CategoryEntity
 import com.example.data.model.ExpenseEntity
 import com.example.ui.theme.*
+import com.example.util.AppConstants
 
 @Composable
 fun CategoryHistoryDialog(
@@ -105,12 +106,25 @@ fun CategoryHistoryDialog(
                             .heightIn(max = 350.dp)
                     ) {
                         items(expenses) { expense ->
+                            val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
                             ExpenseItemRow(
                                 expense = expense,
                                 currency = currency,
-                                onItemClick = { onEditExpense(expense) },
-                                onEditClick = { onEditExpense(expense) },
-                                onDeleteClick = { onDeleteExpense(expense) }
+                                onItemClick = {
+                                    if (isEditable) {
+                                        onEditExpense(expense)
+                                    }
+                                },
+                                onEditClick = {
+                                    if (isEditable) {
+                                        onEditExpense(expense)
+                                    }
+                                },
+                                onDeleteClick = {
+                                    if (isEditable) {
+                                        onDeleteExpense(expense)
+                                    }
+                                }
                             )
                         }
                     }

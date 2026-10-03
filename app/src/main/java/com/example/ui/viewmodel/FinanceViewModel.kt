@@ -269,6 +269,7 @@ class FinanceViewModel(
         timestamp: Long = System.currentTimeMillis()
     ) {
         viewModelScope.launch {
+            val expenseMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(timestamp))
             repository.addExpense(
                 ExpenseEntity(
                     title = title.trim(),
@@ -277,7 +278,7 @@ class FinanceViewModel(
                     categoryName = category.name,
                     categoryIconKey = category.iconKey,
                     dateTimestamp = timestamp,
-                    monthYear = _selectedMonthYear.value,
+                    monthYear = expenseMonthYear,
                     note = note.trim(),
                     isRecurring = isRecurring
                 )
@@ -321,8 +322,14 @@ class FinanceViewModel(
         }
     }
 
-    fun addShoppingExpense(title: String, amount: Double, note: String = "") {
+    fun addShoppingExpense(
+        title: String,
+        amount: Double,
+        note: String = "",
+        timestamp: Long = System.currentTimeMillis()
+    ) {
         viewModelScope.launch {
+            val expenseMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(timestamp))
             repository.addExpense(
                 ExpenseEntity(
                     title = title.trim(),
@@ -330,8 +337,8 @@ class FinanceViewModel(
                     categoryId = 0L,
                     categoryName = "Separate Purchase",
                     categoryIconKey = "shopping",
-                    dateTimestamp = System.currentTimeMillis(),
-                    monthYear = _selectedMonthYear.value,
+                    dateTimestamp = timestamp,
+                    monthYear = expenseMonthYear,
                     note = note.trim(),
                     isRecurring = false // Separate purchase on Home Screen, never linked to Alimentation
                 )
