@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ExpenseEntity
@@ -47,10 +48,11 @@ fun ExpenseItemRow(
     // 24-hour edit/delete window based on stored creation timestamp for all items
     val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
 
-    // Never display "Alimentation" for separate shopping items on Home Screen
+    // Do not display category if it's generic shopping or identical to the item title
     val showCategory = expense.categoryName.isNotBlank() &&
             !expense.categoryName.equals("Alimentation", ignoreCase = true) &&
-            !expense.categoryName.equals("Separate Purchase", ignoreCase = true)
+            !expense.categoryName.equals("Separate Purchase", ignoreCase = true) &&
+            !expense.categoryName.equals(expense.title, ignoreCase = true)
 
     Surface(
         modifier = modifier
@@ -74,89 +76,95 @@ fun ExpenseItemRow(
                         )
                     )
                 )
-                .padding(horizontal = 16.dp, vertical = 13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
+            // Category / Item icon
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF1B3D30)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF1B3D30)),
-                    contentAlignment = Alignment.Center
+                Icon(
+                    imageVector = IconHelper.getCategoryIcon(if (expense.categoryIconKey.isBlank() || expense.categoryIconKey == "alimentation") "shopping" else expense.categoryIconKey),
+                    contentDescription = expense.title,
+                    tint = EmeraldPrimaryLight,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            // Title & Subtitle column (expands flexibly)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        imageVector = IconHelper.getCategoryIcon(if (expense.categoryIconKey.isBlank() || expense.categoryIconKey == "alimentation") "shopping" else expense.categoryIconKey),
-                        contentDescription = expense.title,
-                        tint = EmeraldPrimaryLight,
-                        modifier = Modifier.size(20.dp)
+                    Text(
+                        text = expense.title,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                            fontSize = 15.sp
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    if (expense.isRecurring) {
+                        Icon(
+                            imageVector = Icons.Rounded.Sync,
+                            contentDescription = "Recurring expense",
+                            tint = TextMuted,
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
                 }
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
+                    if (showCategory) {
                         Text(
-                            text = expense.title,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary,
-                                fontSize = 15.sp
-                            )
-                        )
-                        if (expense.isRecurring) {
-                            Icon(
-                                imageVector = Icons.Rounded.Sync,
-                                contentDescription = "Recurring expense",
-                                tint = TextMuted,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        if (showCategory) {
-                            Text(
-                                text = expense.categoryName,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = EmeraldCyan,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            )
-                            Text(
-                                text = "•",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TextMuted,
-                                    fontSize = 12.sp
-                                )
-                            )
-                        }
-
-                        Text(
-                            text = if (expense.note.isNotBlank()) expense.note else dateStr,
+                            text = expense.categoryName,
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextSecondary,
-                                fontSize = 12.sp
+                                color = EmeraldCyan,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
                             ),
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextMuted,
+                                fontSize = 12.sp
+                            )
                         )
                     }
+
+                    Text(
+                        text = if (expense.note.isNotBlank()) expense.note else dateStr,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondary,
+                            fontSize = 12.sp
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
 
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Amount and Action Icons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -166,10 +174,11 @@ fun ExpenseItemRow(
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 14.5.sp
                     ),
+                    maxLines = 1,
                     modifier = Modifier
-                        .padding(end = 4.dp)
+                        .padding(end = 2.dp)
                         .testTag("expense_amount_${expense.id}")
                 )
 
@@ -178,41 +187,40 @@ fun ExpenseItemRow(
                     IconButton(
                         onClick = onEditClick,
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(32.dp)
                             .testTag("edit_expense_${expense.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Edit,
                             contentDescription = "Edit item (24h window)",
                             tint = EmeraldPrimaryLight,
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
 
                     IconButton(
                         onClick = onDeleteClick,
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(32.dp)
                             .testTag("delete_expense_${expense.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.DeleteOutline,
                             contentDescription = "Delete expense",
                             tint = TextMuted,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(17.dp)
                         )
                     }
                 } else {
                     Box(
-                        modifier = Modifier
-                            .size(34.dp),
+                        modifier = Modifier.size(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Lock,
                             contentDescription = "Editing and deletion locked after 24h",
                             tint = TextMuted,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }

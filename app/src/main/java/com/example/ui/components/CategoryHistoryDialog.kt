@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.CategoryEntity
 import com.example.data.model.ExpenseEntity
 import com.example.ui.theme.*
@@ -30,14 +31,17 @@ fun CategoryHistoryDialog(
     onEditExpense: (ExpenseEntity) -> Unit = {},
     onDeleteExpense: (ExpenseEntity) -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = EmeraldSurface,
             border = BorderStroke(1.dp, EmeraldCardBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 20.dp)
                 .testTag("category_history_dialog")
         ) {
             Column(
