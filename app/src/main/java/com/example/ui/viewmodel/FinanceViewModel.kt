@@ -1,10 +1,13 @@
 package com.example.ui.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.data.model.*
 import com.example.data.repository.FinanceRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -54,6 +57,10 @@ class FinanceViewModel(
 
     private val _selectedCategoryFilter = MutableStateFlow<Long?>(null)
     val selectedCategoryFilter: StateFlow<Long?> = _selectedCategoryFilter.asStateFlow()
+
+    // Backup & Restore operation status feedback
+    private val _backupRestoreMessage = MutableStateFlow<String?>(null)
+    val backupRestoreMessage: StateFlow<String?> = _backupRestoreMessage.asStateFlow()
 
     // Active household
     val household: StateFlow<HouseholdEntity> = repository.primaryHousehold
@@ -375,11 +382,22 @@ class FinanceViewModel(
         }
     }
 
-    fun addIncome(amount: Double, source: String = "Monthly income", isRecurring: Boolean = true) {
+    fun addIncome(amount: Double, source: String? = null, isRecurring: Boolean = true) {
         viewModelScope.launch {
+            val currentIncomes = monthlyIncomes.value
+            val label = if (!source.isNullOrBlank() &&
+                !source.equals("Monthly income", ignoreCase = true) &&
+                !source.equals("Monthly Income", ignoreCase = true) &&
+                !source.equals("Other Incomes", ignoreCase = true) &&
+                !source.equals("Other Income", ignoreCase = true)
+            ) {
+                source.trim()
+            } else {
+                if (currentIncomes.isEmpty()) "Monthly Income" else "Other Incomes"
+            }
             repository.addIncome(
                 IncomeEntity(
-                    source = source.trim(),
+                    source = label,
                     amount = amount,
                     monthYear = _selectedMonthYear.value,
                     isRecurring = isRecurring
@@ -390,15 +408,64 @@ class FinanceViewModel(
 
     fun addIncomeWithSource(source: String, amount: Double, isRecurring: Boolean = true) {
         viewModelScope.launch {
+            val currentIncomes = monthlyIncomes.value
+            val label = if (source.isBlank() ||
+                source.equals("Monthly income", ignoreCase = true) ||
+                source.equals("Monthly Income", ignoreCase = true) ||
+                source.equals("Other Incomes", ignoreCase = true) ||
+                source.equals("Other Income", ignoreCase = true)
+            ) {
+                if (currentIncomes.isEmpty()) "Monthly Income" else "Other Incomes"
+            } else {
+                source.trim()
+            }
             repository.addIncome(
                 IncomeEntity(
-                    source = source.trim(),
+                    source = label,
                     amount = amount,
                     monthYear = _selectedMonthYear.value,
                     isRecurring = isRecurring
                 )
             )
         }
+    }
+
+    // Local Backup & Restore using Android Storage Access Framework
+    fun exportDataToUri(context: Context, uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val json = repository.exportBackupJson()
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(json.toByteArray(Charsets.UTF_8))
+                }
+                _backupRestoreMessage.value = "Backup successfully exported to device."
+            } catch (e: Exception) {
+                _backupRestoreMessage.value = "Export failed: ${e.localizedMessage ?: "Unknown error"}"
+            }
+        }
+    }
+
+    fun importDataFromUri(context: Context, uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val json = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    inputStream.bufferedReader(Charsets.UTF_8).readText()
+                } ?: throw IllegalArgumentException("Could not read backup file")
+
+                val result = repository.importBackupJson(json)
+                if (result.isSuccess) {
+                    _backupRestoreMessage.value = "Data restored successfully! ${result.getOrNull() ?: ""}"
+                } else {
+                    _backupRestoreMessage.value = "Restore failed: ${result.exceptionOrNull()?.localizedMessage ?: "Invalid file"}"
+                }
+            } catch (e: Exception) {
+                _backupRestoreMessage.value = "Restore error: ${e.localizedMessage ?: "Invalid file"}"
+            }
+        }
+    }
+
+    fun clearBackupRestoreMessage() {
+        _backupRestoreMessage.value = null
     }
 
     fun deleteIncome(income: IncomeEntity) {

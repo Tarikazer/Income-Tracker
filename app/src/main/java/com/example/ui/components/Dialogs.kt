@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -47,11 +49,14 @@ val DialogBorderColor = Color(0xFF283832)
 @Composable
 fun AddIncomeDialog(
     currency: String,
+    existingIncomesCount: Int = 0,
     onDismiss: () -> Unit,
     onSave: (amount: Double) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val isFirstIncome = existingIncomesCount == 0
+    val incomeCategoryLabel = if (isFirstIncome) "Monthly Income" else "Other Incomes"
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -68,16 +73,49 @@ fun AddIncomeDialog(
                     .fillMaxWidth()
                     .padding(22.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Add income",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                            fontSize = 20.sp
+                        )
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isFirstIncome) Color(0xFF1B3D30) else Color(0xFF1E353B),
+                        border = BorderStroke(1.dp, if (isFirstIncome) Color(0xFF2C634F) else Color(0xFF2E535C))
+                    ) {
+                        Text(
+                            text = incomeCategoryLabel,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = if (isFirstIncome) Color(0xFF7DE0BA) else Color(0xFF67E8F9),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.5.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Add income",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                        fontSize = 20.sp
+                    text = if (isFirstIncome)
+                        "This will be recorded as your main Monthly Income."
+                    else
+                        "This will be recorded and labeled as Other Incomes.",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = TextSecondary,
+                        fontSize = 12.sp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = amountText,
@@ -734,7 +772,8 @@ fun HouseholdDialog(
     currentName: String,
     currentCurrency: String,
     onDismiss: () -> Unit,
-    onSave: (name: String, currency: String) -> Unit
+    onSave: (name: String, currency: String) -> Unit,
+    onOpenBackupRestore: () -> Unit = {}
 ) {
     var name by remember { mutableStateOf(currentName) }
     var currency by remember { mutableStateOf(currentCurrency) }
@@ -803,6 +842,29 @@ fun HouseholdDialog(
                         .testTag("household_currency_input")
                 )
 
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        onDismiss()
+                        onOpenBackupRestore()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MintButtonColor),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("open_backup_restore_from_profile_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.SettingsBackupRestore,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Local Backup & Restore", fontWeight = FontWeight.SemiBold)
+                }
+
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Row(
@@ -828,6 +890,228 @@ fun HouseholdDialog(
                         modifier = Modifier.testTag("save_household_button")
                     ) {
                         Text("Save", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Local Backup and Restore Dialog using Android Storage Access Framework (SAF).
+ * Allows exporting app data to a local file and restoring it back. No cloud services.
+ */
+@Composable
+fun BackupRestoreDialog(
+    onDismiss: () -> Unit,
+    onExportBackup: () -> Unit,
+    onImportBackup: () -> Unit,
+    statusMessage: String? = null,
+    onClearStatus: () -> Unit = {}
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(22.dp),
+            color = DialogSurfaceColor,
+            border = BorderStroke(1.dp, DialogBorderColor),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .testTag("backup_restore_dialog")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(22.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.SettingsBackupRestore,
+                            contentDescription = null,
+                            tint = MintButtonColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Backup & Restore",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary,
+                                fontSize = 20.sp
+                            )
+                        )
+                    }
+
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = TextSecondary)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = "Export your app database (all purchases, categories, incomes, and settings) to a local file on your device via Storage Access Framework, or restore from a previously saved backup file. 100% offline & private.",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = TextSecondary,
+                        lineHeight = 17.sp,
+                        fontSize = 12.5.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Action Card 1: Backup (Export)
+                Surface(
+                    onClick = onExportBackup,
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFF142720),
+                    border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("export_backup_button")
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF1D3D32)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.UploadFile,
+                                contentDescription = null,
+                                tint = MintButtonColor,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Export Local Backup",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            )
+                            Text(
+                                text = "Save a .json backup to your device storage",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = TextSecondary,
+                                    fontSize = 11.5.sp
+                                )
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Action Card 2: Restore (Import)
+                Surface(
+                    onClick = onImportBackup,
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFF13231E),
+                    border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("import_backup_button")
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF1B382F)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.DownloadForOffline,
+                                contentDescription = null,
+                                tint = Color(0xFF7DE0BA),
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Restore from Local File",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            )
+                            Text(
+                                text = "Select an existing backup file to restore",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = TextSecondary,
+                                    fontSize = 11.5.sp
+                                )
+                            )
+                        }
+                    }
+                }
+
+                if (statusMessage != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFF162E25),
+                        border = BorderStroke(1.dp, MintButtonColor.copy(alpha = 0.5f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = statusMessage,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color(0xFFC7EAE1),
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = onClearStatus, modifier = Modifier.size(24.dp)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Dismiss",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Close", color = TextPrimary)
                     }
                 }
             }

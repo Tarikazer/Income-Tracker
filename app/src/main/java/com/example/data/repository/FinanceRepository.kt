@@ -1,10 +1,13 @@
 package com.example.data.repository
 
+import androidx.room.withTransaction
 import com.example.data.local.*
 import com.example.data.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import org.json.JSONArray
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -14,7 +17,8 @@ class FinanceRepository(
     private val householdDao: HouseholdDao,
     private val categoryDao: CategoryDao,
     private val incomeDao: IncomeDao,
-    private val expenseDao: ExpenseDao
+    private val expenseDao: ExpenseDao,
+    private val database: AppDatabase? = null
 ) {
     val primaryHousehold: Flow<HouseholdEntity?> = householdDao.getPrimaryHousehold()
     val allCategories: Flow<List<CategoryEntity>> = categoryDao.getAllCategories()
@@ -246,5 +250,190 @@ class FinanceRepository(
 
     fun getExpensesForCategory(categoryId: Long, monthYear: String): Flow<List<ExpenseEntity>> {
         return expenseDao.getExpensesForCategory(categoryId, monthYear)
+    }
+
+    suspend fun exportBackupJson(): String {
+        val households = householdDao.getAllHouseholdsList()
+        val categories = categoryDao.getCategoriesList()
+        val incomes = incomeDao.getAllIncomesList()
+        val expenses = expenseDao.getAllExpensesList()
+
+        val root = JSONObject()
+        root.put("version", 1)
+        root.put("appName", "Income Control")
+        root.put("exportedAt", System.currentTimeMillis())
+
+        val householdsArray = JSONArray()
+        for (h in households) {
+            val obj = JSONObject()
+            obj.put("id", h.id)
+            obj.put("name", h.name)
+            obj.put("currency", h.currency)
+            obj.put("createdAt", h.createdAt)
+            householdsArray.put(obj)
+        }
+        root.put("households", householdsArray)
+
+        val categoriesArray = JSONArray()
+        for (c in categories) {
+            val obj = JSONObject()
+            obj.put("id", c.id)
+            obj.put("name", c.name)
+            obj.put("iconKey", c.iconKey)
+            obj.put("colorHex", c.colorHex)
+            obj.put("isRecurring", c.isRecurring)
+            obj.put("householdId", c.householdId)
+            obj.put("displayOrder", c.displayOrder)
+            categoriesArray.put(obj)
+        }
+        root.put("categories", categoriesArray)
+
+        val incomesArray = JSONArray()
+        for (inc in incomes) {
+            val obj = JSONObject()
+            obj.put("id", inc.id)
+            obj.put("source", inc.source)
+            obj.put("amount", inc.amount)
+            obj.put("monthYear", inc.monthYear)
+            obj.put("isRecurring", inc.isRecurring)
+            obj.put("dateTimestamp", inc.dateTimestamp)
+            obj.put("householdId", inc.householdId)
+            incomesArray.put(obj)
+        }
+        root.put("incomes", incomesArray)
+
+        val expensesArray = JSONArray()
+        for (exp in expenses) {
+            val obj = JSONObject()
+            obj.put("id", exp.id)
+            obj.put("title", exp.title)
+            obj.put("amount", exp.amount)
+            obj.put("categoryId", exp.categoryId)
+            obj.put("categoryName", exp.categoryName)
+            obj.put("categoryIconKey", exp.categoryIconKey)
+            obj.put("dateTimestamp", exp.dateTimestamp)
+            obj.put("monthYear", exp.monthYear)
+            obj.put("note", exp.note)
+            obj.put("isRecurring", exp.isRecurring)
+            obj.put("householdId", exp.householdId)
+            expensesArray.put(obj)
+        }
+        root.put("expenses", expensesArray)
+
+        return root.toString(2)
+    }
+
+    suspend fun importBackupJson(jsonString: String): Result<String> {
+        return try {
+            val root = JSONObject(jsonString)
+            if (!root.has("households") && !root.has("categories") && !root.has("expenses")) {
+                return Result.failure(IllegalArgumentException("Invalid backup file: missing required data"))
+            }
+
+            val householdsList = mutableListOf<HouseholdEntity>()
+            if (root.has("households")) {
+                val array = root.getJSONArray("households")
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    householdsList.add(
+                        HouseholdEntity(
+                            id = obj.optLong("id", 1L),
+                            name = obj.optString("name", "Tarik"),
+                            currency = obj.optString("currency", "MAD"),
+                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+                        )
+                    )
+                }
+            }
+
+            val categoriesList = mutableListOf<CategoryEntity>()
+            if (root.has("categories")) {
+                val array = root.getJSONArray("categories")
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    categoriesList.add(
+                        CategoryEntity(
+                            id = obj.optLong("id", 0L),
+                            name = obj.getString("name"),
+                            iconKey = obj.optString("iconKey", "shopping"),
+                            colorHex = obj.optLong("colorHex", 0xFF10B981),
+                            isRecurring = obj.optBoolean("isRecurring", false),
+                            householdId = obj.optLong("householdId", 1L),
+                            displayOrder = obj.optInt("displayOrder", i)
+                        )
+                    )
+                }
+            }
+
+            val incomesList = mutableListOf<IncomeEntity>()
+            if (root.has("incomes")) {
+                val array = root.getJSONArray("incomes")
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    incomesList.add(
+                        IncomeEntity(
+                            id = obj.optLong("id", 0L),
+                            source = obj.optString("source", "Monthly Income"),
+                            amount = obj.getDouble("amount"),
+                            monthYear = obj.optString("monthYear", "2026-10"),
+                            isRecurring = obj.optBoolean("isRecurring", true),
+                            dateTimestamp = obj.optLong("dateTimestamp", System.currentTimeMillis()),
+                            householdId = obj.optLong("householdId", 1L)
+                        )
+                    )
+                }
+            }
+
+            val expensesList = mutableListOf<ExpenseEntity>()
+            if (root.has("expenses")) {
+                val array = root.getJSONArray("expenses")
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    expensesList.add(
+                        ExpenseEntity(
+                            id = obj.optLong("id", 0L),
+                            title = obj.getString("title"),
+                            amount = obj.getDouble("amount"),
+                            categoryId = obj.optLong("categoryId", 0L),
+                            categoryName = obj.optString("categoryName", "Separate Purchase"),
+                            categoryIconKey = obj.optString("categoryIconKey", "shopping"),
+                            dateTimestamp = obj.optLong("dateTimestamp", System.currentTimeMillis()),
+                            monthYear = obj.optString("monthYear", "2026-10"),
+                            note = obj.optString("note", ""),
+                            isRecurring = obj.optBoolean("isRecurring", false),
+                            householdId = obj.optLong("householdId", 1L)
+                        )
+                    )
+                }
+            }
+
+            if (database != null) {
+                database.withTransaction {
+                    householdDao.clearAllHouseholds()
+                    categoryDao.clearAllCategories()
+                    incomeDao.clearAllIncomes()
+                    expenseDao.clearAllExpenses()
+
+                    if (householdsList.isNotEmpty()) householdDao.insertHouseholds(householdsList)
+                    if (categoriesList.isNotEmpty()) categoryDao.insertCategories(categoriesList)
+                    if (incomesList.isNotEmpty()) incomeDao.insertIncomes(incomesList)
+                    if (expensesList.isNotEmpty()) expenseDao.insertExpenses(expensesList)
+                }
+            } else {
+                householdDao.clearAllHouseholds()
+                categoryDao.clearAllCategories()
+                incomeDao.clearAllIncomes()
+                expenseDao.clearAllExpenses()
+
+                if (householdsList.isNotEmpty()) householdDao.insertHouseholds(householdsList)
+                if (categoriesList.isNotEmpty()) categoryDao.insertCategories(categoriesList)
+                if (incomesList.isNotEmpty()) incomeDao.insertIncomes(incomesList)
+                if (expensesList.isNotEmpty()) expenseDao.insertExpenses(expensesList)
+            }
+
+            Result.success("Restored: ${categoriesList.size} categories, ${incomesList.size} incomes, ${expensesList.size} expenses")
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

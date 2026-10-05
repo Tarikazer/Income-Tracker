@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,6 +33,8 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import com.example.util.AppConstants
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -38,6 +43,7 @@ fun HomeScreen(
     viewModel: FinanceViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val household by viewModel.household.collectAsState()
     val monthYear by viewModel.selectedMonthYear.collectAsState()
     val summary by viewModel.monthlySummary.collectAsState()
@@ -45,12 +51,31 @@ fun HomeScreen(
     val expenses by viewModel.filteredExpenses.collectAsState()
     val groupedExpenses by viewModel.groupedExpenses.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val backupRestoreMessage by viewModel.backupRestoreMessage.collectAsState()
 
     var showSearch by remember { mutableStateOf(false) }
     var showAddShoppingDialog by remember { mutableStateOf(false) }
     var showHouseholdDialog by remember { mutableStateOf(false) }
+    var showBackupRestoreDialog by remember { mutableStateOf(false) }
     var expenseToDelete by remember { mutableStateOf<ExpenseEntity?>(null) }
     var expenseToEdit by remember { mutableStateOf<ExpenseEntity?>(null) }
+
+    // Android Storage Access Framework (SAF) Launchers for local backup & restore
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportDataToUri(context, uri)
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importDataFromUri(context, uri)
+        }
+    }
 
     Scaffold(
         modifier = modifier
@@ -140,6 +165,21 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Rounded.Analytics,
                                 contentDescription = "Reports & Trends",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        // Local Backup & Restore button (Storage Access Framework)
+                        IconButton(
+                            onClick = { showBackupRestoreDialog = true },
+                            modifier = Modifier
+                                .size(44.dp)
+                                .testTag("backup_restore_icon_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.SettingsBackupRestore,
+                                contentDescription = "Local Backup & Restore",
                                 tint = TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -450,7 +490,26 @@ fun HomeScreen(
             onSave = { name, curr ->
                 viewModel.updateHousehold(name, curr)
                 showHouseholdDialog = false
+            },
+            onOpenBackupRestore = {
+                showBackupRestoreDialog = true
             }
+        )
+    }
+
+    // Local Backup & Restore Dialog (Storage Access Framework)
+    if (showBackupRestoreDialog) {
+        BackupRestoreDialog(
+            onDismiss = { showBackupRestoreDialog = false },
+            onExportBackup = {
+                val filename = "income_control_backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.json"
+                exportLauncher.launch(filename)
+            },
+            onImportBackup = {
+                importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+            },
+            statusMessage = backupRestoreMessage,
+            onClearStatus = { viewModel.clearBackupRestoreMessage() }
         )
     }
 }

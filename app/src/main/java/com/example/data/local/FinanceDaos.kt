@@ -12,11 +12,20 @@ interface HouseholdDao {
     @Query("SELECT * FROM households")
     fun getAllHouseholds(): Flow<List<HouseholdEntity>>
 
+    @Query("SELECT * FROM households")
+    suspend fun getAllHouseholdsList(): List<HouseholdEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHousehold(household: HouseholdEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertHouseholds(households: List<HouseholdEntity>)
+
     @Update
     suspend fun updateHousehold(household: HouseholdEntity)
+
+    @Query("DELETE FROM households")
+    suspend fun clearAllHouseholds()
 }
 
 @Dao
@@ -42,26 +51,38 @@ interface CategoryDao {
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
 
+    @Query("DELETE FROM categories")
+    suspend fun clearAllCategories()
+
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun getCategoryCount(): Int
 }
 
 @Dao
 interface IncomeDao {
-    @Query("SELECT * FROM incomes WHERE monthYear = :monthYear ORDER BY dateTimestamp DESC")
+    @Query("SELECT * FROM incomes WHERE monthYear = :monthYear ORDER BY CASE WHEN source LIKE '%Monthly Income%' THEN 0 ELSE 1 END, id ASC, dateTimestamp ASC")
     fun getIncomesForMonth(monthYear: String): Flow<List<IncomeEntity>>
 
-    @Query("SELECT * FROM incomes ORDER BY dateTimestamp DESC")
+    @Query("SELECT * FROM incomes ORDER BY CASE WHEN source LIKE '%Monthly Income%' THEN 0 ELSE 1 END, id ASC, dateTimestamp ASC")
     fun getAllIncomes(): Flow<List<IncomeEntity>>
+
+    @Query("SELECT * FROM incomes ORDER BY CASE WHEN source LIKE '%Monthly Income%' THEN 0 ELSE 1 END, id ASC, dateTimestamp ASC")
+    suspend fun getAllIncomesList(): List<IncomeEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIncome(income: IncomeEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertIncomes(incomes: List<IncomeEntity>)
 
     @Update
     suspend fun updateIncome(income: IncomeEntity)
 
     @Delete
     suspend fun deleteIncome(income: IncomeEntity)
+
+    @Query("DELETE FROM incomes")
+    suspend fun clearAllIncomes()
 }
 
 @Dao
@@ -75,14 +96,23 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses ORDER BY dateTimestamp DESC")
     fun getAllExpenses(): Flow<List<ExpenseEntity>>
 
+    @Query("SELECT * FROM expenses ORDER BY dateTimestamp DESC")
+    suspend fun getAllExpensesList(): List<ExpenseEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExpense(expense: ExpenseEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExpenses(expenses: List<ExpenseEntity>)
 
     @Update
     suspend fun updateExpense(expense: ExpenseEntity)
 
     @Delete
     suspend fun deleteExpense(expense: ExpenseEntity)
+
+    @Query("DELETE FROM expenses")
+    suspend fun clearAllExpenses()
 
     @Query("DELETE FROM expenses WHERE id = :id")
     suspend fun deleteExpenseById(id: Long)

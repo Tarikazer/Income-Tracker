@@ -1,5 +1,27 @@
 # APK Version Release Log
 
+## Version 1.7 (Version Code: 8)
+- **File**: `IncomeControl-v1.7.apk` (and `app-latest.apk`)
+- **Date**: October 5, 2026
+- **Package**: `com.aistudio.incomecontrol.tkrzq`
+
+### Features & Updates in v1.7:
+1. **Local Backup & Restore via Android Storage Access Framework (SAF)**:
+   - Full backup and restore functionality without cloud services.
+   - Exports the entire Room database (household, categories, incomes, expenses, timestamps) to a clean, portable `.json` file on the user's device (e.g. Downloads, Documents).
+   - Allows importing any previous backup file to safely restore all app data.
+   - Accessible via the new Backup & Restore button in the top bar and within the Household profile dialog.
+2. **Dynamic Comparison Display in HomeScreen**:
+   - In the swipeable summary card, if last month's total spending was 0, the difference text compared to last month is automatically hidden.
+3. **Updated Income Logic**:
+   - The very first income added by the user is automatically categorized and labeled as **Monthly Income**.
+   - Any subsequent incomes added after the first are categorized and labeled as **Other Incomes**.
+   - Visual badges in the Add Income dialog and Budget screen clearly communicate the income classification.
+4. **Custom Date & Time Picker on Add Purchase**:
+   - Allows picking date and time for purchases (defaulting to now, preventing future timestamps, supporting backdating, locking transactions backdated >24 hours, and showing as read-only upon edit).
+
+---
+
 ## Version 1.6 (Version Code: 7)
 - **File**: `IncomeControl-v1.6.apk` (and `app-latest.apk`)
 - **Date**: October 3, 2026

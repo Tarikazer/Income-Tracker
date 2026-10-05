@@ -88,43 +88,49 @@ fun SwipeableHomeSpendingCard(
                     val absDiff = abs(diff)
                     val formattedDiff = formatCurrency(absDiff, currency)
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        if (diff > 0.009) {
-                            // Spent MORE than previous period: Red with ▲
-                            Text(
-                                text = "▲ $formattedDiff more ${page.periodLabel}",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color(0xFFFF6B6B),
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
-                                )
-                            )
-                        } else if (diff < -0.009) {
-                            // Spent LESS than previous period: Green with ▼
-                            Text(
-                                text = "▼ $formattedDiff less ${page.periodLabel}",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color(0xFF7DE0BA),
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
-                                )
-                            )
-                        } else {
-                            Text(
-                                text = "• Equal to previous period",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color(0xFFA1CFC3),
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 12.sp
-                                )
-                            )
-                        }
-                    }
+                    // If last month's total spending was 0, hide or do not display the text that shows the difference compared to last month
+                    val isLastMonthComparison = page.periodLabel.contains("last month", ignoreCase = true) ||
+                            page.title.contains("month", ignoreCase = true)
+                    val hideComparison = isLastMonthComparison && page.previousAmount <= 0.0001
 
-                    Spacer(modifier = Modifier.height(3.dp))
+                    if (!hideComparison) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            if (diff > 0.009) {
+                                // Spent MORE than previous period: Red with ▲
+                                Text(
+                                    text = "▲ $formattedDiff more ${page.periodLabel}",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = Color(0xFFFF6B6B),
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            } else if (diff < -0.009) {
+                                // Spent LESS than previous period: Green with ▼
+                                Text(
+                                    text = "▼ $formattedDiff less ${page.periodLabel}",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = Color(0xFF7DE0BA),
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            } else {
+                                Text(
+                                    text = "• Equal to previous period",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = Color(0xFFA1CFC3),
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(3.dp))
+                    }
 
                     Text(
                         text = "Shopping-list purchases only",

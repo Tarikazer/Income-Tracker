@@ -208,10 +208,19 @@ fun BudgetScreen(
                         }
                     }
 
-                    // Existing incomes list
-                    incomes.forEach { income ->
+                    // Existing incomes list: first is Monthly Income, subsequent are Other Incomes
+                    incomes.forEachIndexed { index, income ->
+                        val displaySource = if (income.source.equals("Monthly income", ignoreCase = true) ||
+                            income.source.equals("Monthly Income", ignoreCase = true) ||
+                            income.source.equals("Other Incomes", ignoreCase = true) ||
+                            income.source.equals("Other Income", ignoreCase = true)
+                        ) {
+                            if (index == 0) "Monthly Income" else "Other Incomes"
+                        } else {
+                            income.source
+                        }
                         IncomeRow(
-                            income = income,
+                            income = income.copy(source = displaySource),
                             currency = household.currency,
                             onDelete = { viewModel.deleteIncome(income) }
                         )
@@ -289,6 +298,7 @@ fun BudgetScreen(
     if (showAddIncomeDialog) {
         AddIncomeDialog(
             currency = household.currency,
+            existingIncomesCount = incomes.size,
             onDismiss = { showAddIncomeDialog = false },
             onSave = { amount ->
                 viewModel.addIncome(amount)
