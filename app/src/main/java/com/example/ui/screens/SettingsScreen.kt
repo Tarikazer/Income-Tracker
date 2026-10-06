@@ -373,47 +373,61 @@ fun SettingsScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            IncomeControlWalletIcon(
+                                modifier = Modifier.size(44.dp),
+                                showBackgroundCanvas = false
+                            )
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
-                                IncomeControlWalletIcon(
-                                    modifier = Modifier.size(46.dp),
-                                    showBackgroundCanvas = false
-                                )
-                                Column {
+                                // "Income Control" and "Frost Dev" in one line with no wrap text
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
                                     Text(
                                         text = strings.appName,
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Bold,
                                             color = TextPrimary
-                                        )
+                                        ),
+                                        maxLines = 1,
+                                        softWrap = false
                                     )
-                                    Text(
-                                        text = strings.versionLabel,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = EmeraldPrimaryLight,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    )
-                                }
-                            }
 
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = EmeraldPrimary.copy(alpha = 0.16f),
-                                border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.45f))
-                            ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = EmeraldPrimary.copy(alpha = 0.15f),
+                                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.45f))
+                                    ) {
+                                        Text(
+                                            text = "Frost Dev",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                color = EmeraldPrimary,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 11.sp
+                                            ),
+                                            maxLines = 1,
+                                            softWrap = false,
+                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                        )
+                                    }
+                                }
+
+                                // Only leave Version (no official logo & theme edition text)
                                 Text(
-                                    text = "Frost Dev",
-                                    style = MaterialTheme.typography.labelMedium.copy(
+                                    text = strings.versionLabel,
+                                    style = MaterialTheme.typography.bodySmall.copy(
                                         color = EmeraldPrimary,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Medium
                                     ),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }

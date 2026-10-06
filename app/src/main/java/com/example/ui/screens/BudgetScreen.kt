@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CategoryEntity
@@ -91,20 +92,22 @@ fun BudgetScreen(
                             )
                         }
 
-                        // Household name with header logo
+                        // Household name with header logo (weighted so it truncates on long names)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
+                                .weight(1f, fill = false)
                                 .clickable { showHouseholdDialog = true }
-                                .padding(vertical = 4.dp, horizontal = 4.dp)
+                                .padding(vertical = 4.dp, horizontal = 2.dp)
                                 .testTag("budget_household_title")
                         ) {
                             IncomeControlHeaderLogo(size = 32.dp)
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.weight(1f, fill = false)
                             ) {
                                 Text(
                                     text = household.name,
@@ -112,7 +115,9 @@ fun BudgetScreen(
                                         fontWeight = FontWeight.Bold,
                                         color = TextPrimary,
                                         fontSize = 20.sp
-                                    )
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Icon(
                                     imageVector = Icons.Rounded.UnfoldMore,

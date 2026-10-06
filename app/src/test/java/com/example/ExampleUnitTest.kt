@@ -51,5 +51,10 @@ class ExampleUnitTest {
     assertEquals("Created by Frost Dev", enStrings.createdBy)
     assertEquals("Créé par Frost Dev", frStrings.createdBy)
     assertEquals("+212693780909", enStrings.developerPhone)
+
+    assertEquals("Version 1.8", enStrings.versionLabel)
+    assertEquals("Version 1.8", frStrings.versionLabel)
+    assertEquals("Light Blue & White (Active)", enStrings.colorPaletteDescription)
+    assertEquals("Bleu Clair & Blanc (Actif)", frStrings.colorPaletteDescription)
   }
 }

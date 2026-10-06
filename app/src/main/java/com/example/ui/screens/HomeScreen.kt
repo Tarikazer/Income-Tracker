@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CategoryEntity
@@ -94,33 +95,37 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Household name selector with app header logo
+                    // Household name selector with app header logo (weighted so long names truncate gracefully)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
+                            .weight(1f, fill = false)
                             .clickable { showHouseholdDialog = true }
-                            .padding(vertical = 4.dp, horizontal = 4.dp)
+                            .padding(vertical = 4.dp, horizontal = 2.dp)
                             .testTag("household_dropdown_button")
                     ) {
                         // Header logo: small version of the wallet-in-circle
-                        IncomeControlHeaderLogo(size = 38.dp)
+                        IncomeControlHeaderLogo(size = 34.dp)
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier.weight(1f, fill = false)
                         ) {
                             Text(
                                 text = household.name,
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary,
-                                    fontSize = 20.sp
-                                )
+                                    fontSize = 19.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Icon(
                                 imageVector = Icons.Rounded.UnfoldMore,
@@ -131,15 +136,17 @@ fun HomeScreen(
                         }
                     }
 
-                    // Action Icons: Search, Budget/Wallet, Reports
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // Action Icons: Search, Budget/Wallet, Reports, Settings (never disappear)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
                         IconButton(
                             onClick = { showSearch = !showSearch },
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(40.dp)
                                 .testTag("search_icon_button")
                         ) {
                             Icon(
@@ -154,7 +161,7 @@ fun HomeScreen(
                         IconButton(
                             onClick = { viewModel.navigateTo(AppScreen.BUDGET) },
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(40.dp)
                                 .testTag("budget_screen_button")
                         ) {
                             Icon(
@@ -169,7 +176,7 @@ fun HomeScreen(
                         IconButton(
                             onClick = { viewModel.navigateTo(AppScreen.STATISTICS) },
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(40.dp)
                                 .testTag("analytics_icon_button")
                         ) {
                             Icon(
@@ -180,11 +187,11 @@ fun HomeScreen(
                             )
                         }
 
-                        // Settings / Paramètres (Light/Dark mode, French language, Ciel Blue & White)
+                        // Settings / Paramètres (Light/Dark mode, French language, Light Blue & White)
                         IconButton(
                             onClick = { viewModel.navigateTo(AppScreen.SETTINGS) },
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(40.dp)
                                 .testTag("settings_icon_button")
                         ) {
                             Icon(
