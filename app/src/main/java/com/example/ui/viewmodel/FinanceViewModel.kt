@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.data.model.*
 import com.example.data.repository.FinanceRepository
+import com.example.ui.util.AppLanguage
+import com.example.ui.util.ThemeMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -17,7 +19,8 @@ import java.util.*
 enum class AppScreen {
     HOME,
     BUDGET,
-    STATISTICS
+    STATISTICS,
+    SETTINGS
 }
 
 data class CategoryExpenseBreakdown(
@@ -34,12 +37,59 @@ data class DailySpendPoint(
 )
 
 class FinanceViewModel(
-    private val repository: FinanceRepository
+    private val repository: FinanceRepository,
+    private val context: Context? = null
 ) : ViewModel() {
 
     init {
         viewModelScope.launch {
             repository.ensureDefaultData()
+        }
+    }
+
+    // Theme Mode (Dark, Light, System) - persisted in SharedPreferences (default Light Blue & White)
+    private val _themeMode = MutableStateFlow(context?.let { loadPersistedThemeMode(it) } ?: ThemeMode.LIGHT)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
+    // Language (English, French) - persisted in SharedPreferences
+    private val _language = MutableStateFlow(context?.let { loadPersistedLanguage(it) } ?: AppLanguage.ENGLISH)
+    val language: StateFlow<AppLanguage> = _language.asStateFlow()
+
+    fun setThemeMode(mode: ThemeMode, appContext: Context? = null) {
+        _themeMode.value = mode
+        val ctx = appContext ?: context
+        if (ctx != null) {
+            val prefs = ctx.getSharedPreferences("income_control_settings", Context.MODE_PRIVATE)
+            prefs.edit().putString("theme_mode", mode.name).apply()
+        }
+    }
+
+    fun setLanguage(lang: AppLanguage, appContext: Context? = null) {
+        _language.value = lang
+        val ctx = appContext ?: context
+        if (ctx != null) {
+            val prefs = ctx.getSharedPreferences("income_control_settings", Context.MODE_PRIVATE)
+            prefs.edit().putString("app_language", lang.name).apply()
+        }
+    }
+
+    private fun loadPersistedThemeMode(ctx: Context): ThemeMode {
+        return try {
+            val prefs = ctx.getSharedPreferences("income_control_settings", Context.MODE_PRIVATE)
+            val name = prefs.getString("theme_mode", ThemeMode.LIGHT.name) ?: ThemeMode.LIGHT.name
+            ThemeMode.valueOf(name)
+        } catch (e: Exception) {
+            ThemeMode.LIGHT
+        }
+    }
+
+    private fun loadPersistedLanguage(ctx: Context): AppLanguage {
+        return try {
+            val prefs = ctx.getSharedPreferences("income_control_settings", Context.MODE_PRIVATE)
+            val name = prefs.getString("app_language", AppLanguage.ENGLISH.name) ?: AppLanguage.ENGLISH.name
+            AppLanguage.valueOf(name)
+        } catch (e: Exception) {
+            AppLanguage.ENGLISH
         }
     }
 
@@ -585,12 +635,13 @@ class FinanceViewModel(
 }
 
 class FinanceViewModelFactory(
-    private val repository: FinanceRepository
+    private val repository: FinanceRepository,
+    private val context: Context? = null
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FinanceViewModel::class.java)) {
-            return FinanceViewModel(repository) as T
+            return FinanceViewModel(repository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

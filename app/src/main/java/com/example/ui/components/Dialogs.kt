@@ -33,11 +33,11 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-// Mint color from user screenshots
-val MintButtonColor = Color(0xFF7DE0BA)
-val MintButtonTextColor = Color(0xFF0A2E20)
-val DialogSurfaceColor = Color(0xFF1E2824)
-val DialogBorderColor = Color(0xFF283832)
+// Ciel Blue (Sky Blue) & White dialog theme values
+val MintButtonColor: Color @Composable get() = LocalAppColors.current.buttonBackground
+val MintButtonTextColor: Color @Composable get() = LocalAppColors.current.buttonText
+val DialogSurfaceColor: Color @Composable get() = LocalAppColors.current.dialogSurface
+val DialogBorderColor: Color @Composable get() = LocalAppColors.current.dialogBorder
 
 /**
  * Add Income Dialog matching user's Screenshot 1:
@@ -472,16 +472,16 @@ fun AddShoppingExpenseDialog(
                                 errorMessage = null
                             },
                             shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) MintButtonColor else Color(0xFF1B362D),
+                            color = if (isSelected) MintButtonColor else EmeraldSurfaceElevated,
                             border = BorderStroke(
                                 1.dp,
-                                if (isSelected) MintButtonColor else Color(0xFF284C3E)
+                                if (isSelected) MintButtonColor else EmeraldCardBorder
                             )
                         ) {
                             Text(
                                 text = suggestion,
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = if (isSelected) Color(0xFF03241A) else TextPrimary,
+                                    color = if (isSelected) MintButtonTextColor else TextPrimary,
                                     fontSize = 11.5.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 ),
@@ -562,8 +562,8 @@ fun AddShoppingExpenseDialog(
                                 datePickerDialog.show()
                             },
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF13231E),
-                            border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                            color = EmeraldSurfaceElevated,
+                            border = BorderStroke(1.dp, EmeraldCardBorder),
                             modifier = Modifier
                                 .weight(1.3f)
                                 .testTag("pick_purchase_date_button")
@@ -626,8 +626,8 @@ fun AddShoppingExpenseDialog(
                                 timePickerDialog.show()
                             },
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFF13231E),
-                            border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                            color = EmeraldSurfaceElevated,
+                            border = BorderStroke(1.dp, EmeraldCardBorder),
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("pick_purchase_time_button")
@@ -971,8 +971,8 @@ fun BackupRestoreDialog(
                 Surface(
                     onClick = onExportBackup,
                     shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFF142720),
-                    border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                    color = EmeraldSurfaceElevated,
+                    border = BorderStroke(1.dp, EmeraldCardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("export_backup_button")
@@ -988,7 +988,7 @@ fun BackupRestoreDialog(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF1D3D32)),
+                                .background(EmeraldPrimary.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -1024,8 +1024,8 @@ fun BackupRestoreDialog(
                 Surface(
                     onClick = onImportBackup,
                     shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFF13231E),
-                    border = BorderStroke(1.dp, Color(0xFF284C3E)),
+                    color = EmeraldSurfaceElevated,
+                    border = BorderStroke(1.dp, EmeraldCardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("import_backup_button")
@@ -1041,13 +1041,13 @@ fun BackupRestoreDialog(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF1B382F)),
+                                .background(EmeraldPrimary.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.DownloadForOffline,
                                 contentDescription = null,
-                                tint = Color(0xFF7DE0BA),
+                                tint = MintButtonColor,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -1075,7 +1075,7 @@ fun BackupRestoreDialog(
                     Spacer(modifier = Modifier.height(14.dp))
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFF162E25),
+                        color = EmeraldSurfaceElevated,
                         border = BorderStroke(1.dp, MintButtonColor.copy(alpha = 0.5f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -1087,7 +1087,7 @@ fun BackupRestoreDialog(
                             Text(
                                 text = statusMessage,
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color(0xFFC7EAE1),
+                                    color = TextPrimary,
                                     fontWeight = FontWeight.Medium
                                 ),
                                 modifier = Modifier.weight(1f)
@@ -1393,7 +1393,7 @@ fun EditShoppingExpenseDialog(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MintButtonColor,
                             contentColor = MintButtonTextColor,
-                            disabledContainerColor = Color(0xFF1B362D),
+                            disabledContainerColor = EmeraldSurfaceElevated,
                             disabledContentColor = TextMuted
                         ),
                         shape = RoundedCornerShape(20.dp)
@@ -1460,9 +1460,9 @@ fun ReorderCategoryDialog(
                         enabled = canMoveUp,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1E3A30),
-                            contentColor = EmeraldPrimaryLight,
-                            disabledContainerColor = Color(0xFF15221D),
+                            containerColor = EmeraldSurfaceElevated,
+                            contentColor = EmeraldPrimary,
+                            disabledContainerColor = EmeraldCardBorder.copy(alpha = 0.5f),
                             disabledContentColor = TextMuted
                         ),
                         shape = RoundedCornerShape(14.dp)
@@ -1484,9 +1484,9 @@ fun ReorderCategoryDialog(
                         enabled = canMoveDown,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1E3A30),
-                            contentColor = EmeraldPrimaryLight,
-                            disabledContainerColor = Color(0xFF15221D),
+                            containerColor = EmeraldSurfaceElevated,
+                            contentColor = EmeraldPrimary,
+                            disabledContainerColor = EmeraldCardBorder.copy(alpha = 0.5f),
                             disabledContentColor = TextMuted
                         ),
                         shape = RoundedCornerShape(14.dp)

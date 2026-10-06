@@ -68,11 +68,13 @@ fun InteractiveDonutChart(
 
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
     val totalAmount = remember(breakdownList) { breakdownList.sumOf { it.totalAmount } }
+    val primaryColor = EmeraldPrimary
+    val cyanColor = EmeraldCyan
 
-    val categoryColors = remember(breakdownList) {
+    val categoryColors = remember(breakdownList, primaryColor, cyanColor) {
         listOf(
-            EmeraldPrimary,
-            EmeraldCyan,
+            primaryColor,
+            cyanColor,
             AccentAmber,
             AccentBlue,
             AccentPink,
@@ -257,7 +259,7 @@ fun InteractiveDonutChart(
                                 selectedIndex = if (selectedIndex == index) null else index
                             },
                         shape = RoundedCornerShape(10.dp),
-                        color = if (isSelected) Color(0xFF1E3A30) else Color.Transparent
+                        color = if (isSelected) EmeraldSurfaceElevated else Color.Transparent
                     ) {
                         Row(
                             modifier = Modifier
@@ -376,6 +378,11 @@ fun DailySpendingTrendChart(
             Spacer(modifier = Modifier.height(18.dp))
 
             // Bar Chart Area
+            val primaryBarColor = EmeraldPrimary
+            val cyanBarColor = EmeraldCyan
+            val emptyBarColor = EmeraldSurfaceElevated
+            val slotBgColor = EmeraldCardBorder.copy(alpha = 0.5f)
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -412,14 +419,14 @@ fun DailySpendingTrendChart(
                         val isSelected = touchedPoint?.dayOfMonth == point.dayOfMonth
 
                         val barColor = when {
-                            isSelected -> EmeraldCyan
-                            point.amount > 0 -> EmeraldPrimary
-                            else -> Color(0xFF1E3A30)
+                            isSelected -> cyanBarColor
+                            point.amount > 0 -> primaryBarColor
+                            else -> emptyBarColor
                         }
 
                         // Draw background slot
                         drawRoundRect(
-                            color = Color(0xFF142922),
+                            color = slotBgColor,
                             topLeft = Offset(x, 0f),
                             size = Size(barWidth, chartHeight),
                             cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())

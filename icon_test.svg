@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="circleGlow" cx="50%" cy="46%" r="52%">
+      <stop offset="0%" stop-color="#E3F0FA"/>
+      <stop offset="70%" stop-color="#D3E8F8"/>
+      <stop offset="100%" stop-color="#C8E0F4"/>
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#96BBD8" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded canvas -->
+  <rect width="512" height="512" rx="96" ry="96" fill="#EAF3FC"/>
+
+  <!-- Main Center Circle with soft shadow and radial glow -->
+  <circle cx="256" cy="256" r="160" fill="url(#circleGlow)" filter="url(#shadow)"/>
+
+  <!-- Banknotes peeking out -->
+  <g>
+    <!-- Left / Back Banknote (tilted) -->
+    <rect x="165" y="182" width="98" height="54" rx="8" transform="rotate(-36 214 209)"
+          fill="#D3E8F8" stroke="#2B9CE0" stroke-width="11" stroke-linejoin="round"/>
+    
+    <!-- Right / Front Banknote (tilted with inner circle) -->
+    <rect x="198" y="160" width="98" height="54" rx="8" transform="rotate(-36 247 187)"
+          fill="#D3E8F8" stroke="#2B9CE0" stroke-width="11" stroke-linejoin="round"/>
+    <!-- Center circle in right banknote -->
+    <circle cx="247" cy="187" r="11" fill="#2B9CE0"/>
+  </g>
+
+  <!-- Wallet Body -->
+  <!-- Main rounded rectangle -->
+  <rect x="170" y="238" width="164" height="144" rx="26" ry="26" fill="#2B9CE0"/>
+
+  <!-- Top wallet slit / inner lining gap -->
+  <path d="M 184 256 Q 210 258 246 256" stroke="#D3E8F8" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+  <!-- Clasp Tab on the right -->
+  <!-- Outer cutout gap around tab (light blue) -->
+  <path d="M 334 293 H 290 A 24 24 0 0 0 290 341 H 334" fill="#2B9CE0" stroke="#D3E8F8" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Tab snap button -->
+  <circle cx="298" cy="317" r="8.5" fill="#D3E8F8"/>
+</svg>

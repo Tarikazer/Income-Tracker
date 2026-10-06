@@ -23,6 +23,7 @@ import com.example.data.model.ExpenseEntity
 import com.example.data.model.IncomeEntity
 import com.example.ui.components.*
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import java.util.Locale
@@ -33,6 +34,7 @@ fun BudgetScreen(
     viewModel: FinanceViewModel,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val household by viewModel.household.collectAsState()
     val monthYear by viewModel.selectedMonthYear.collectAsState()
     val summary by viewModel.monthlySummary.collectAsState()
@@ -89,29 +91,36 @@ fun BudgetScreen(
                             )
                         }
 
-                        // Household name "Tarik ⌄"
+                        // Household name with header logo
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
                                 .clickable { showHouseholdDialog = true }
-                                .padding(vertical = 8.dp, horizontal = 4.dp)
+                                .padding(vertical = 4.dp, horizontal = 4.dp)
                                 .testTag("budget_household_title")
                         ) {
-                            Text(
-                                text = household.name,
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary,
-                                    fontSize = 20.sp
+                            IncomeControlHeaderLogo(size = 32.dp)
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = household.name,
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary,
+                                        fontSize = 20.sp
+                                    )
                                 )
-                            )
-                            Icon(
-                                imageVector = Icons.Rounded.UnfoldMore,
-                                contentDescription = "Household options",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(18.dp)
-                            )
+                                Icon(
+                                    imageVector = Icons.Rounded.UnfoldMore,
+                                    contentDescription = "Household options",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
 
@@ -166,7 +175,7 @@ fun BudgetScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Monthly income",
+                        text = strings.monthlyIncomeSection,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
@@ -178,7 +187,7 @@ fun BudgetScreen(
                     Surface(
                         onClick = { showAddIncomeDialog = true },
                         shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF13231E),
+                        color = EmeraldSurfaceElevated,
                         border = BorderStroke(1.dp, EmeraldCardBorder),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -198,7 +207,7 @@ fun BudgetScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "Add income",
+                                text = strings.addIncome,
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     color = TextPrimary,
                                     fontWeight = FontWeight.Medium,
@@ -213,9 +222,11 @@ fun BudgetScreen(
                         val displaySource = if (income.source.equals("Monthly income", ignoreCase = true) ||
                             income.source.equals("Monthly Income", ignoreCase = true) ||
                             income.source.equals("Other Incomes", ignoreCase = true) ||
-                            income.source.equals("Other Income", ignoreCase = true)
+                            income.source.equals("Other Income", ignoreCase = true) ||
+                            income.source.equals("Revenu Mensuel", ignoreCase = true) ||
+                            income.source.equals("Autres Revenus", ignoreCase = true)
                         ) {
-                            if (index == 0) "Monthly Income" else "Other Incomes"
+                            if (index == 0) strings.monthlyIncome else strings.otherIncomes
                         } else {
                             income.source
                         }
@@ -236,7 +247,7 @@ fun BudgetScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Categories",
+                        text = strings.categories,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
@@ -256,7 +267,7 @@ fun BudgetScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "New Category",
+                            text = strings.newCategory,
                             style = MaterialTheme.typography.labelMedium.copy(
                                 color = EmeraldPrimary,
                                 fontWeight = FontWeight.SemiBold
@@ -618,7 +629,8 @@ private fun AddCategoryDialog(
                         Surface(
                             onClick = { selectedIconKey = key },
                             shape = RoundedCornerShape(10.dp),
-                            color = if (isSelected) EmeraldPrimary else Color(0xFF1B362D),
+                            color = if (isSelected) EmeraldPrimary else EmeraldSurfaceElevated,
+                            border = BorderStroke(1.dp, if (isSelected) EmeraldPrimary else EmeraldCardBorder),
                             modifier = Modifier.padding(vertical = 2.dp)
                         ) {
                             Row(
@@ -629,13 +641,13 @@ private fun AddCategoryDialog(
                                 Icon(
                                     imageVector = IconHelper.getCategoryIcon(key),
                                     contentDescription = null,
-                                    tint = if (isSelected) Color(0xFF032218) else EmeraldPrimaryLight,
+                                    tint = if (isSelected) Color.White else EmeraldPrimary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
                                     text = label,
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = if (isSelected) Color(0xFF032218) else TextPrimary,
+                                        color = if (isSelected) Color.White else TextPrimary,
                                         fontSize = 11.sp
                                     )
                                 )

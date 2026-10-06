@@ -30,6 +30,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import com.example.data.model.ExpenseEntity
 import com.example.ui.components.*
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import com.example.util.AppConstants
@@ -44,6 +45,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val household by viewModel.household.collectAsState()
     val monthYear by viewModel.selectedMonthYear.collectAsState()
     val summary by viewModel.monthlySummary.collectAsState()
@@ -96,29 +98,37 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Household name selector "Tarik ⌄"
+                    // Household name selector with app header logo
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier
                             .clickable { showHouseholdDialog = true }
-                            .padding(vertical = 8.dp, horizontal = 4.dp)
+                            .padding(vertical = 4.dp, horizontal = 4.dp)
                             .testTag("household_dropdown_button")
                     ) {
-                        Text(
-                            text = household.name,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary,
-                                fontSize = 22.sp
+                        // Header logo: small version of the wallet-in-circle
+                        IncomeControlHeaderLogo(size = 38.dp)
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = household.name,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
+                                    fontSize = 20.sp
+                                )
                             )
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.UnfoldMore,
-                            contentDescription = "Switch household",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                            Icon(
+                                imageVector = Icons.Rounded.UnfoldMore,
+                                contentDescription = "Switch household",
+                                tint = TextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
 
                     // Action Icons: Search, Budget/Wallet, Reports
@@ -149,7 +159,7 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.AccountBalanceWallet,
-                                contentDescription = "Go to Budget",
+                                contentDescription = strings.budget,
                                 tint = TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -160,26 +170,26 @@ fun HomeScreen(
                             onClick = { viewModel.navigateTo(AppScreen.STATISTICS) },
                             modifier = Modifier
                                 .size(44.dp)
-                                .testTag("settings_icon_button")
+                                .testTag("analytics_icon_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Analytics,
-                                contentDescription = "Reports & Trends",
+                                contentDescription = strings.statistics,
                                 tint = TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
 
-                        // Local Backup & Restore button (Storage Access Framework)
+                        // Settings / Paramètres (Light/Dark mode, French language, Ciel Blue & White)
                         IconButton(
-                            onClick = { showBackupRestoreDialog = true },
+                            onClick = { viewModel.navigateTo(AppScreen.SETTINGS) },
                             modifier = Modifier
                                 .size(44.dp)
-                                .testTag("backup_restore_icon_button")
+                                .testTag("settings_icon_button")
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.SettingsBackupRestore,
-                                contentDescription = "Local Backup & Restore",
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = strings.settingsTitle,
                                 tint = TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -192,7 +202,7 @@ fun HomeScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.setSearchQuery(it) },
-                        placeholder = { Text("Search water bottle, fast food, supermarket...") },
+                        placeholder = { Text(strings.searchPlaceholder) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Rounded.Search,
@@ -239,7 +249,7 @@ fun HomeScreen(
                     showAddShoppingDialog = true
                 },
                 containerColor = EmeraldPrimary,
-                contentColor = Color(0xFF022018),
+                contentColor = Color.White,
                 shape = CircleShape,
                 modifier = Modifier
                     .padding(bottom = 12.dp, end = 12.dp)
@@ -278,7 +288,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Separate Purchases",
+                        text = strings.separatePurchases,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
@@ -286,7 +296,7 @@ fun HomeScreen(
                         )
                     )
                     Text(
-                        text = "${expenses.size} items",
+                        text = "${expenses.size} ${strings.items}",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = TextMuted,
                             fontSize = 12.sp
@@ -317,7 +327,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(56.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF1B382F)),
+                                    .background(EmeraldSurfaceElevated),
                                 contentAlignment = Alignment.Center
                             ) {
                                 @Suppress("DEPRECATION")
@@ -329,14 +339,14 @@ fun HomeScreen(
                                 )
                             }
                             Text(
-                                text = "No separate expenses logged yet",
+                                text = strings.noPurchasesYet,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     color = TextPrimary,
                                     fontWeight = FontWeight.Bold
                                 )
                             )
                             Text(
-                                text = "Log things you buy separately like fast food outside, water bottles, and supermarket groceries using the '+' button below.",
+                                text = strings.noPurchasesSubtext,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = TextSecondary,
                                     textAlign = TextAlign.Center,
@@ -348,9 +358,14 @@ fun HomeScreen(
                 }
             } else {
                 groupedExpenses.forEach { group ->
+                    val displayDayTitle = when (group.dayTitle) {
+                        "Today" -> strings.today
+                        "Yesterday" -> strings.yesterday
+                        else -> group.dayTitle
+                    }
                     stickyHeader(key = "header_${group.dayKey}") {
                         Surface(
-                            color = Color(0xFF0C1914).copy(alpha = 0.96f),
+                            color = EmeraldBackground.copy(alpha = 0.96f),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
@@ -363,7 +378,7 @@ fun HomeScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = group.dayTitle,
+                                    text = displayDayTitle,
                                     style = MaterialTheme.typography.titleSmall.copy(
                                         color = EmeraldCyan,
                                         fontWeight = FontWeight.SemiBold,
@@ -373,7 +388,7 @@ fun HomeScreen(
                                 Text(
                                     text = "${String.format(Locale.US, "%,.2f", group.dayTotal)} ${household.currency}",
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = Color(0xFFC7EAE1),
+                                        color = TextSecondary,
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 13.sp
                                     )

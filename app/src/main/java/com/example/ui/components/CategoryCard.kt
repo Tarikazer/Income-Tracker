@@ -42,8 +42,8 @@ fun CategoryCard(
             .clickable { onViewHistory() }
             .testTag("category_card_${category.name.lowercase().replace(" ", "_")}"),
         shape = RoundedCornerShape(20.dp),
-        color = Color(0xFF11221C),
-        border = BorderStroke(1.dp, Color(0xFF1D382E))
+        color = EmeraldSurface,
+        border = BorderStroke(1.dp, EmeraldCardBorder)
     ) {
         Column(
             modifier = Modifier
@@ -51,8 +51,8 @@ fun CategoryCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF142720),
-                            Color(0xFF0F1E19)
+                            EmeraldSurface,
+                            EmeraldSurfaceElevated
                         )
                     )
                 )

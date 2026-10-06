@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="circleGlow" cx="50%" cy="44%" r="56%">
+      <stop offset="0%" stop-color="#EBF4FB"/>
+      <stop offset="65%" stop-color="#D3E8F8"/>
+      <stop offset="100%" stop-color="#C5DDF2"/>
+    </radialGradient>
+    <filter id="softShadow" x="-15%" y="-15%" width="130%" height="135%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#8BB5D6" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+
+  <!-- Full square maskable background in #EAF3FC with wallet safely within center 80% zone -->
+  <rect width="512" height="512" fill="#EAF3FC"/>
+
+  <circle cx="256" cy="256" r="148" fill="url(#circleGlow)" filter="url(#softShadow)"/>
+
+  <g transform="scale(0.92) translate(22, 22)">
+    <rect x="165" y="182" width="98" height="54" rx="8" transform="rotate(-36 214 209)"
+          fill="#D3E8F8" stroke="#2B9CE0" stroke-width="11" stroke-linejoin="round"/>
+    <rect x="198" y="160" width="98" height="54" rx="8" transform="rotate(-36 247 187)"
+          fill="#D3E8F8" stroke="#2B9CE0" stroke-width="11" stroke-linejoin="round"/>
+    <circle cx="247" cy="187" r="11" fill="#2B9CE0"/>
+    <rect x="170" y="238" width="164" height="142" rx="26" ry="26" fill="#2B9CE0"/>
+    <path d="M 184 256 Q 212 258 248 256" stroke="#D3E8F8" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M 334 293 H 290 A 24 24 0 0 0 290 341 H 334" fill="#2B9CE0" stroke="#D3E8F8" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="298" cy="317" r="8.5" fill="#D3E8F8"/>
+  </g>
+</svg>

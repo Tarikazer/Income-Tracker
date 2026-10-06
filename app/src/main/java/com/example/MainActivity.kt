@@ -1,4 +1,5 @@
 package com.example
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -6,7 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,9 +19,10 @@ import com.example.data.repository.FinanceRepository
 import com.example.ui.screens.AppLoadingScreen
 import com.example.ui.screens.BudgetScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.StatisticsScreen
-import com.example.ui.theme.EmeraldBackground
 import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.util.ThemeMode
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import com.example.ui.viewmodel.FinanceViewModelFactory
@@ -29,27 +33,39 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme(darkTheme = true) {
-                val scope = rememberCoroutineScope()
-                val database = AppDatabase.getDatabase(applicationContext, scope)
-                val repository = FinanceRepository(
-                    householdDao = database.householdDao(),
-                    categoryDao = database.categoryDao(),
-                    incomeDao = database.incomeDao(),
-                    expenseDao = database.expenseDao(),
-                    database = database
-                )
+            val scope = rememberCoroutineScope()
+            val database = AppDatabase.getDatabase(applicationContext, scope)
+            val repository = FinanceRepository(
+                householdDao = database.householdDao(),
+                categoryDao = database.categoryDao(),
+                incomeDao = database.incomeDao(),
+                expenseDao = database.expenseDao(),
+                database = database
+            )
 
-                val viewModel: FinanceViewModel = viewModel(
-                    factory = FinanceViewModelFactory(repository)
-                )
+            val viewModel: FinanceViewModel = viewModel(
+                factory = FinanceViewModelFactory(repository, applicationContext)
+            )
 
+            val themeMode by viewModel.themeMode.collectAsState()
+            val language by viewModel.language.collectAsState()
+            val systemDark = isSystemInDarkTheme()
+            val isDark = when (themeMode) {
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+                ThemeMode.SYSTEM -> systemDark
+            }
+
+            MyApplicationTheme(
+                darkTheme = isDark,
+                language = language
+            ) {
                 val currentScreen by viewModel.currentScreen.collectAsState()
 
                 var isAppLoading by remember { mutableStateOf(true) }
 
                 LaunchedEffect(Unit) {
-                    delay(1000L)
+                    delay(800L)
                     isAppLoading = false
                 }
 
@@ -60,7 +76,7 @@ class MainActivity : ComponentActivity() {
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = EmeraldBackground
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     if (isAppLoading) {
                         AppLoadingScreen()
@@ -74,6 +90,7 @@ class MainActivity : ComponentActivity() {
                                 AppScreen.HOME -> HomeScreen(viewModel = viewModel)
                                 AppScreen.BUDGET -> BudgetScreen(viewModel = viewModel)
                                 AppScreen.STATISTICS -> StatisticsScreen(viewModel = viewModel)
+                                AppScreen.SETTINGS -> SettingsScreen(viewModel = viewModel)
                             }
                         }
                     }

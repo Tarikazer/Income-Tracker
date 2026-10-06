@@ -62,8 +62,8 @@ fun ExpenseItemRow(
             }
             .testTag("expense_row_${expense.id}"),
         shape = RoundedCornerShape(18.dp),
-        color = Color(0xFF11221C),
-        border = BorderStroke(1.dp, Color(0xFF1D382E))
+        color = EmeraldSurface,
+        border = BorderStroke(1.dp, EmeraldCardBorder)
     ) {
         Row(
             modifier = Modifier
@@ -71,8 +71,8 @@ fun ExpenseItemRow(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF142720),
-                            Color(0xFF0F1E19)
+                            EmeraldSurface,
+                            EmeraldSurfaceElevated
                         )
                     )
                 )
@@ -84,7 +84,7 @@ fun ExpenseItemRow(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF1B3D30)),
+                    .background(EmeraldPrimary.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

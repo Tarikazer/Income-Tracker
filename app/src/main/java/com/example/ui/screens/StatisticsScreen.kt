@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.*
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import java.util.Locale
@@ -37,6 +38,7 @@ fun StatisticsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val strings = LocalAppStrings.current
     val household by viewModel.household.collectAsState()
     val monthYear by viewModel.selectedMonthYear.collectAsState()
     val summary by viewModel.monthlySummary.collectAsState()

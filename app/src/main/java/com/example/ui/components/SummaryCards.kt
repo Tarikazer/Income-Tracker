@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.SwipeableSpendingSummary
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.util.Locale
 import kotlin.math.abs
 
@@ -30,6 +31,7 @@ fun SwipeableHomeSpendingCard(
     currency: String,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val pages = listOf(
         summary.monthSpending,
         summary.weekSpending,
@@ -53,6 +55,20 @@ fun SwipeableHomeSpendingCard(
                 modifier = Modifier.fillMaxWidth()
             ) { pageIndex ->
                 val page = pages[pageIndex]
+                val displayTitle = when {
+                    page.title.contains("month", ignoreCase = true) -> strings.totalSpentThisMonth
+                    page.title.contains("week", ignoreCase = true) -> strings.totalSpentThisWeek
+                    page.title.contains("today", ignoreCase = true) -> strings.totalSpentToday
+                    else -> page.title
+                }
+
+                val displayPeriodLabel = when {
+                    page.periodLabel.contains("month", ignoreCase = true) -> strings.thanLastMonth
+                    page.periodLabel.contains("week", ignoreCase = true) -> strings.thanLastWeek
+                    page.periodLabel.contains("yesterday", ignoreCase = true) -> strings.thanYesterday
+                    else -> page.periodLabel
+                }
+
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -62,9 +78,9 @@ fun SwipeableHomeSpendingCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = page.title,
+                            text = displayTitle,
                             style = MaterialTheme.typography.titleSmall.copy(
-                                color = Color(0xFFC7EAE1),
+                                color = Color(0xFFE0F2FE),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 13.5.sp
                             )
@@ -101,7 +117,7 @@ fun SwipeableHomeSpendingCard(
                             if (diff > 0.009) {
                                 // Spent MORE than previous period: Red with ▲
                                 Text(
-                                    text = "▲ $formattedDiff more ${page.periodLabel}",
+                                    text = "▲ $formattedDiff ${strings.more} $displayPeriodLabel",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = Color(0xFFFF6B6B),
                                         fontWeight = FontWeight.SemiBold,
@@ -109,20 +125,20 @@ fun SwipeableHomeSpendingCard(
                                     )
                                 )
                             } else if (diff < -0.009) {
-                                // Spent LESS than previous period: Green with ▼
+                                // Spent LESS than previous period: Bright sky green with ▼
                                 Text(
-                                    text = "▼ $formattedDiff less ${page.periodLabel}",
+                                    text = "▼ $formattedDiff ${strings.less} $displayPeriodLabel",
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = Color(0xFF7DE0BA),
+                                        color = Color(0xFF7DD3FC),
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 12.sp
                                     )
                                 )
                             } else {
                                 Text(
-                                    text = "• Equal to previous period",
+                                    text = strings.equalToPreviousPeriod,
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = Color(0xFFA1CFC3),
+                                        color = Color(0xFFBAE6FD),
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 12.sp
                                     )
@@ -133,9 +149,9 @@ fun SwipeableHomeSpendingCard(
                     }
 
                     Text(
-                        text = "Shopping-list purchases only",
+                        text = strings.shoppingListPurchasesOnly,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0x99A1CFC3),
+                            color = Color(0xCCBAE6FD),
                             fontSize = 11.sp
                         )
                     )
@@ -160,7 +176,7 @@ fun SwipeableHomeSpendingCard(
                                 height = 6.dp
                             )
                             .clip(RoundedCornerShape(3.dp))
-                            .background(if (isSelected) Color(0xFF7DE0BA) else Color(0x55A1CFC3))
+                            .background(if (isSelected) Color(0xFF38BDF8) else Color(0x66BAE6FD))
                     )
                 }
             }
@@ -174,6 +190,7 @@ fun HomeSpendingCard(
     currency: String,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -191,9 +208,9 @@ fun HomeSpendingCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Total spent this month",
+                    text = strings.totalSpentThisMonth,
                     style = MaterialTheme.typography.titleSmall.copy(
-                        color = Color(0xFFC7EAE1),
+                        color = Color(0xFFE0F2FE),
                         fontWeight = FontWeight.Medium,
                         fontSize = 13.5.sp
                     )
@@ -213,9 +230,9 @@ fun HomeSpendingCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Shopping-list purchases only",
+                text = strings.shoppingListPurchasesOnly,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color(0xFFA1CFC3),
+                    color = Color(0xCCBAE6FD),
                     fontSize = 11.5.sp,
                     lineHeight = 15.sp
                 )
@@ -232,11 +249,12 @@ fun BudgetSummaryCard(
     currency: String,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .background(SummaryCardGradient)
+            .background(BudgetCardGradient)
             .padding(20.dp)
             .testTag("budget_summary_card")
     ) {
@@ -244,8 +262,8 @@ fun BudgetSummaryCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            BudgetRow(label = "Total income", value = totalIncome, currency = currency)
-            BudgetRow(label = "Total spent", value = totalSpent, currency = currency)
+            BudgetRow(label = strings.totalIncome, value = totalIncome, currency = currency)
+            BudgetRow(label = strings.totalSpent, value = totalSpent, currency = currency)
 
             Spacer(modifier = Modifier.height(2.dp))
             HorizontalDivider(
@@ -255,10 +273,10 @@ fun BudgetSummaryCard(
             )
 
             BudgetRow(
-                label = "Remaining balance",
+                label = strings.remainingBalance,
                 value = actualRemaining,
                 currency = currency,
-                highlightColor = if (actualRemaining >= 0) EmeraldCyan else AccentRed,
+                highlightColor = if (actualRemaining >= 0) Color(0xFF7DD3FC) else AccentRed,
                 isBold = true
             )
         }
@@ -281,7 +299,7 @@ private fun BudgetRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = if (isBold) highlightColor else Color(0xFFC7EAE1),
+                color = if (isBold) highlightColor else Color(0xFFE0F2FE),
                 fontWeight = if (isBold) FontWeight.SemiBold else FontWeight.Normal,
                 fontSize = if (isBold) 15.sp else 14.sp
             )
