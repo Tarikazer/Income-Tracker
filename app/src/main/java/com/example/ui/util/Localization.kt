@@ -96,7 +96,7 @@ class AppStrings(val language: AppLanguage) {
     val restoreBackup = if (isFrench) "Restaurer une sauvegarde locale" else "Restore Local Backup"
     val backupDescription = if (isFrench) "Sauvegardez vos données hors-ligne sur votre appareil (Storage Access Framework)." else "Safely backup all your data offline to your device."
     val appInfoSection = if (isFrench) "À propos" else "About"
-    val versionLabel = if (isFrench) "Version 1.7 - Édition Bleu Ciel & Blanc" else "Version 1.7 - Ciel Blue & White Edition"
+    val versionLabel = if (isFrench) "Version 1.8 - Édition Logo & Thème Officiels" else "Version 1.8 - Official Logo & Theme Edition"
     val offlineSecure = if (isFrench) "100% Hors-ligne & Sécurisé (SQLite Local)" else "100% Offline & Private (Local SQLite)"
     val createdBy = if (isFrench) "Créé par Frost Dev" else "Created by Frost Dev"
     val developerLabel = if (isFrench) "Développeur" else "Developer"
