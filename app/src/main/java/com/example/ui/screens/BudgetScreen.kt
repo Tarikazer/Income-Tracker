@@ -420,11 +420,16 @@ fun BudgetScreen(
 
     if (categoryToDelete != null) {
         val cat = categoryToDelete!!
+        var expenseCount by remember(cat.id) { mutableStateOf<Int?>(null) }
+        LaunchedEffect(cat.id) {
+            expenseCount = viewModel.getExpenseCountForCategory(cat.id)
+        }
+
         AlertDialog(
             onDismissRequest = { categoryToDelete = null },
             title = {
                 Text(
-                    text = "Delete Category?",
+                    text = strings.deleteCategoryTitle,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -433,7 +438,7 @@ fun BudgetScreen(
             },
             text = {
                 Text(
-                    text = "Are you sure you want to delete '${cat.name}'? All its associated expenses will be removed.",
+                    text = strings.deleteCategoryConfirmation(cat.name, expenseCount ?: 0),
                     style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
                 )
             },
@@ -446,12 +451,12 @@ fun BudgetScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(strings.delete, color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { categoryToDelete = null }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text(strings.cancel, color = TextSecondary)
                 }
             },
             containerColor = EmeraldSurface,

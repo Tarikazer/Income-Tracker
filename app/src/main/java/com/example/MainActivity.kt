@@ -32,19 +32,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            val scope = rememberCoroutineScope()
-            val database = AppDatabase.getDatabase(applicationContext, scope)
-            val repository = FinanceRepository(
-                householdDao = database.householdDao(),
-                categoryDao = database.categoryDao(),
-                incomeDao = database.incomeDao(),
-                expenseDao = database.expenseDao(),
-                database = database
-            )
+        val app = application as IncomeControlApp
+        val repository = app.repository
+        val viewModelFactory = FinanceViewModelFactory(repository, applicationContext)
 
+        setContent {
             val viewModel: FinanceViewModel = viewModel(
-                factory = FinanceViewModelFactory(repository, applicationContext)
+                factory = viewModelFactory
             )
 
             val themeMode by viewModel.themeMode.collectAsState()

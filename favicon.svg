@@ -22,12 +22,12 @@
   <!-- Banknotes peeking out of the top of the wallet -->
   <g>
     <!-- Left / Back Banknote (tilted outline) -->
-    <rect x=\"165\" y=\"182\" width=\"98\" height=\"54\" rx=\"8\" transform=\"rotate(-36 214 209)\"
-          fill=\"#D3E8F8\" stroke=\"#2B9CE0\" stroke-width=\"11\" stroke-linejoin=\"round\"/>
+    <rect x="165" y="182" width="98" height="54" rx="8" transform="rotate(-36 214 209)"
+          fill="#D3E8F8" stroke="#2B9CE0" stroke-width="11" stroke-linejoin="round"/>
 
     <!-- Right / Front Banknote (tilted outline with circle in the middle) -->
-    <rect x=\"198\" y=\"160\" width=\"98\" height=\"54\" rx=\"8\" transform=\"rotate(-36 247 187)\"
-          fill=\"#D3E8F8\" stroke=\"#2B9CE0\" stroke-width=\"11\" stroke-linejoin=\"round\"/>
+    <rect x="198" y="160" width="98" height="54" rx="8" transform="rotate(-36 247 187)"
+          fill="#D3E8F8" stroke="#2B9CE0" stroke-width="11" stroke-linejoin="round"/>
     <circle cx="247" cy="187" r="11" fill="#2B9CE0"/>
   </g>
 

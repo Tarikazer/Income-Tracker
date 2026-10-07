@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
         ExpenseEntity::class
     ],
     version = 4,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun householdDao(): HouseholdDao
@@ -37,7 +37,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "income_control_db"
                 )
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(*ALL_MIGRATIONS)
+                    .fallbackToDestructiveMigrationFrom(1, 2, 3)
                     .addCallback(DatabaseCallback(scope))
                     .build()
                 INSTANCE = instance

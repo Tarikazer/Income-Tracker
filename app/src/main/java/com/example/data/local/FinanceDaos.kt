@@ -120,6 +120,9 @@ interface ExpenseDao {
     @Query("DELETE FROM expenses WHERE categoryId = :categoryId")
     suspend fun deleteExpensesForCategory(categoryId: Long)
 
+    @Query("SELECT COUNT(*) FROM expenses WHERE categoryId = :categoryId")
+    suspend fun getExpenseCountForCategory(categoryId: Long): Int
+
     @Query("UPDATE expenses SET categoryId = 0, categoryName = 'Separate Purchase', categoryIconKey = 'shopping' WHERE isRecurring = 0 AND (categoryName = 'Alimentation' OR categoryId = 3)")
     suspend fun detachShoppingFromAlimentation()
 }

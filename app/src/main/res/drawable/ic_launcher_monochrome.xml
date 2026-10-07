@@ -11,65 +11,52 @@
         android:translateX="1.85185"
         android:translateY="1.85185">
 
-        <!-- Center circle in light sky blue with diameter 66 (radius 162 in 512 space) -->
-        <path
-            android:fillColor="#D3E8F8"
-            android:pathData="M 256,94 A 162,162 0 1,0 256,418 A 162,162 0 1,0 256,94 Z" />
-
-        <!-- Left / Back Banknote (tilted outline) -->
+        <!-- Left / Back Banknote (tilted silhouette) -->
         <group
             android:pivotX="214"
             android:pivotY="209"
             android:rotation="-36">
             <path
-                android:fillColor="#D3E8F8"
-                android:strokeColor="#2B9CE0"
+                android:fillColor="#00000000"
+                android:strokeColor="#FFFFFF"
                 android:strokeWidth="11"
                 android:strokeLineJoin="round"
                 android:pathData="M 173,182 h 82 a 8,8 0 0,1 8,8 v 38 a 8,8 0 0,1 -8,8 h -82 a 8,8 0 0,1 -8,-8 v -38 a 8,8 0 0,1 8,-8 Z" />
         </group>
 
-        <!-- Right / Front Banknote (tilted outline with circle in the middle) -->
+        <!-- Right / Front Banknote (tilted silhouette with inner circle) -->
         <group
             android:pivotX="247"
             android:pivotY="187"
             android:rotation="-36">
             <path
-                android:fillColor="#D3E8F8"
-                android:strokeColor="#2B9CE0"
+                android:fillColor="#00000000"
+                android:strokeColor="#FFFFFF"
                 android:strokeWidth="11"
                 android:strokeLineJoin="round"
                 android:pathData="M 206,160 h 82 a 8,8 0 0,1 8,8 v 38 a 8,8 0 0,1 -8,8 h -82 a 8,8 0 0,1 -8,-8 v -38 a 8,8 0 0,1 8,-8 Z" />
             <path
-                android:fillColor="#2B9CE0"
+                android:fillColor="#FFFFFF"
                 android:pathData="M 247,176 a 11,11 0 1,0 0,22 a 11,11 0 1,0 0,-22 Z" />
         </group>
 
-        <!-- Solid-blue wallet body (rounded-rectangle) -->
+        <!-- Wallet body (solid rounded-rectangle) -->
         <path
-            android:fillColor="#2B9CE0"
+            android:fillColor="#FFFFFF"
             android:pathData="M 196,238 h 112 a 26,26 0 0,1 26,26 v 90 a 26,26 0 0,1 -26,26 h -112 a 26,26 0 0,1 -26,-26 v -90 a 26,26 0 0,1 26,-26 Z" />
 
-        <!-- Thin light-blue gap / top wallet opening -->
+        <!-- Clasp tab on the right side -->
         <path
-            android:fillColor="#00000000"
-            android:strokeColor="#D3E8F8"
-            android:strokeWidth="6"
-            android:strokeLineCap="round"
-            android:pathData="M 184,256 Q 212,258 248,256" />
-
-        <!-- Clasp tab on the right side separated by thin light-blue gap -->
-        <path
-            android:fillColor="#2B9CE0"
-            android:strokeColor="#D3E8F8"
-            android:strokeWidth="7"
+            android:fillColor="#FFFFFF"
+            android:strokeColor="#000000"
+            android:strokeWidth="5"
             android:strokeLineJoin="round"
             android:strokeLineCap="round"
             android:pathData="M 334,293 H 290 A 24,24 0 0,0 290,341 H 334 Z" />
 
-        <!-- Small light-blue button circle on the tab -->
+        <!-- Small button circle on the tab -->
         <path
-            android:fillColor="#D3E8F8"
+            android:fillColor="#000000"
             android:pathData="M 298,308.5 a 8.5,8.5 0 1,0 0,17 a 8.5,8.5 0 1,0 0,-17 Z" />
     </group>
 </vector>

@@ -216,23 +216,62 @@ class FinanceViewModel(
     // Statistics computations
     val categoryBreakdown: StateFlow<List<CategoryExpenseBreakdown>> = combine(
         currentMonthExpenses,
-        allCategories
-    ) { expenses, categories ->
+        allCategories,
+        language
+    ) { expenses, categories, lang ->
         val total = expenses.sumOf { it.amount }
         val categoryMap = categories.associateBy { it.id }
-        val grouped = expenses.groupBy { it.categoryId }
 
-        grouped.mapNotNull { (catId, catExpenses) ->
-            val cat = categoryMap[catId] ?: return@mapNotNull null
+        val knownCategoryExpenses = mutableMapOf<CategoryEntity, MutableList<ExpenseEntity>>()
+        val separatePurchases = mutableListOf<ExpenseEntity>()
+
+        for (expense in expenses) {
+            val cat = categoryMap[expense.categoryId]
+            if (cat != null) {
+                knownCategoryExpenses.getOrPut(cat) { mutableListOf() }.add(expense)
+            } else {
+                separatePurchases.add(expense)
+            }
+        }
+
+        val list = mutableListOf<CategoryExpenseBreakdown>()
+        for ((cat, catExpenses) in knownCategoryExpenses) {
             val sum = catExpenses.sumOf { it.amount }
             val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
-            CategoryExpenseBreakdown(
-                category = cat,
-                totalAmount = sum,
-                percentage = pct,
-                count = catExpenses.size
+            list.add(
+                CategoryExpenseBreakdown(
+                    category = cat,
+                    totalAmount = sum,
+                    percentage = pct,
+                    count = catExpenses.size
+                )
             )
-        }.sortedByDescending { it.totalAmount }
+        }
+
+        if (separatePurchases.isNotEmpty()) {
+            val separateName = if (lang == AppLanguage.FRENCH) "Achats séparés" else "Separate Purchases"
+            val separateCategory = CategoryEntity(
+                id = 0L,
+                name = separateName,
+                iconKey = "shopping",
+                isRecurring = false,
+                colorHex = 0xFF64748BL, // neutral slate color
+                householdId = 1,
+                displayOrder = 999
+            )
+            val sum = separatePurchases.sumOf { it.amount }
+            val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
+            list.add(
+                CategoryExpenseBreakdown(
+                    category = separateCategory,
+                    totalAmount = sum,
+                    percentage = pct,
+                    count = separatePurchases.size
+                )
+            )
+        }
+
+        list.sortedByDescending { it.totalAmount }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -340,6 +379,9 @@ class FinanceViewModel(
                     isRecurring = isRecurring
                 )
             )
+            if (_selectedMonthYear.value != expenseMonthYear) {
+                _selectedMonthYear.value = expenseMonthYear
+            }
         }
     }
 
@@ -351,6 +393,8 @@ class FinanceViewModel(
                 ?: categories.firstOrNull()
                 ?: return@launch
 
+            val now = System.currentTimeMillis()
+            val expenseMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
             repository.addExpense(
                 ExpenseEntity(
                     title = title,
@@ -358,12 +402,15 @@ class FinanceViewModel(
                     categoryId = category.id,
                     categoryName = category.name,
                     categoryIconKey = category.iconKey,
-                    dateTimestamp = System.currentTimeMillis(),
-                    monthYear = _selectedMonthYear.value,
+                    dateTimestamp = now,
+                    monthYear = expenseMonthYear,
                     note = "Quick logged item",
                     isRecurring = false
                 )
             )
+            if (_selectedMonthYear.value != expenseMonthYear) {
+                _selectedMonthYear.value = expenseMonthYear
+            }
         }
     }
 
@@ -400,6 +447,9 @@ class FinanceViewModel(
                     isRecurring = false // Separate purchase on Home Screen, never linked to Alimentation
                 )
             )
+            if (_selectedMonthYear.value != expenseMonthYear) {
+                _selectedMonthYear.value = expenseMonthYear
+            }
         }
     }
 
@@ -416,6 +466,8 @@ class FinanceViewModel(
                     category.name.contains("Family", ignoreCase = true) ||
                     category.isRecurring
 
+            val now = System.currentTimeMillis()
+            val expenseMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
             repository.addExpense(
                 ExpenseEntity(
                     title = if (note.isNotBlank()) "${category.name} - $note" else category.name,
@@ -423,12 +475,15 @@ class FinanceViewModel(
                     categoryId = category.id,
                     categoryName = category.name,
                     categoryIconKey = category.iconKey,
-                    dateTimestamp = System.currentTimeMillis(),
-                    monthYear = _selectedMonthYear.value,
+                    dateTimestamp = now,
+                    monthYear = expenseMonthYear,
                     note = note.trim(),
                     isRecurring = isFixedCategory
                 )
             )
+            if (_selectedMonthYear.value != expenseMonthYear) {
+                _selectedMonthYear.value = expenseMonthYear
+            }
         }
     }
 
@@ -445,14 +500,20 @@ class FinanceViewModel(
             } else {
                 if (currentIncomes.isEmpty()) "Monthly Income" else "Other Incomes"
             }
+            val now = System.currentTimeMillis()
+            val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
             repository.addIncome(
                 IncomeEntity(
                     source = label,
                     amount = amount,
-                    monthYear = _selectedMonthYear.value,
-                    isRecurring = isRecurring
+                    monthYear = incomeMonthYear,
+                    isRecurring = isRecurring,
+                    dateTimestamp = now
                 )
             )
+            if (_selectedMonthYear.value != incomeMonthYear) {
+                _selectedMonthYear.value = incomeMonthYear
+            }
         }
     }
 
@@ -469,15 +530,25 @@ class FinanceViewModel(
             } else {
                 source.trim()
             }
+            val now = System.currentTimeMillis()
+            val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
             repository.addIncome(
                 IncomeEntity(
                     source = label,
                     amount = amount,
-                    monthYear = _selectedMonthYear.value,
-                    isRecurring = isRecurring
+                    monthYear = incomeMonthYear,
+                    isRecurring = isRecurring,
+                    dateTimestamp = now
                 )
             )
+            if (_selectedMonthYear.value != incomeMonthYear) {
+                _selectedMonthYear.value = incomeMonthYear
+            }
         }
+    }
+
+    suspend fun getExpenseCountForCategory(categoryId: Long): Int {
+        return repository.getExpenseCountForCategory(categoryId)
     }
 
     // Local Backup & Restore using Android Storage Access Framework

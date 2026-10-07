@@ -96,7 +96,7 @@ class AppStrings(val language: AppLanguage) {
     val restoreBackup = if (isFrench) "Restaurer une sauvegarde locale" else "Restore Local Backup"
     val backupDescription = if (isFrench) "Sauvegardez vos données hors-ligne sur votre appareil (Storage Access Framework)." else "Safely backup all your data offline to your device."
     val appInfoSection = if (isFrench) "À propos" else "About"
-    val versionLabel = "Version 1.8"
+    val versionLabel = "Version 1.9"
     val offlineSecure = if (isFrench) "100% Hors-ligne & Sécurisé (SQLite Local)" else "100% Offline & Private (Local SQLite)"
     val createdBy = if (isFrench) "Créé par Frost Dev" else "Created by Frost Dev"
     val developerLabel = if (isFrench) "Développeur" else "Developer"
@@ -106,6 +106,16 @@ class AppStrings(val language: AppLanguage) {
     val whatsapp = "WhatsApp"
     val copy = if (isFrench) "Copier" else "Copy"
     val numberCopied = if (isFrench) "Numéro copié (+212 693-780909)" else "Phone number copied (+212 693-780909)"
+
+    // Category Deletion Confirmation
+    val deleteCategoryTitle = if (isFrench) "Supprimer la catégorie ?" else "Delete Category?"
+    fun deleteCategoryConfirmation(categoryName: String, count: Int): String {
+        return if (isFrench) {
+            "Supprimer $categoryName et ses $count achats ? Cette action est irréversible."
+        } else {
+            "Delete $categoryName and its $count purchases? This cannot be undone."
+        }
+    }
 
     // Statistics
     val statsTitle = if (isFrench) "Statistiques & Tendances" else "Reports & Trends"

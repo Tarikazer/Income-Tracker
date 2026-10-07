@@ -44,6 +44,10 @@ class FinanceRepository(
         categoryDao.deleteCategory(category)
     }
 
+    suspend fun getExpenseCountForCategory(categoryId: Long): Int {
+        return expenseDao.getExpenseCountForCategory(categoryId)
+    }
+
     fun getIncomesForMonth(monthYear: String): Flow<List<IncomeEntity>> {
         return incomeDao.getIncomesForMonth(monthYear)
     }
