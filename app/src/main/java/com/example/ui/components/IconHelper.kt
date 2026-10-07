@@ -10,6 +10,7 @@ object IconHelper {
         return when (iconKey.lowercase()) {
             "rent" -> Icons.Rounded.Home
             "sport" -> Icons.Rounded.FitnessCenter
+            "shopping" -> Icons.Rounded.ShoppingBag
             "alimentation", "food", "groceries" -> Icons.Rounded.ShoppingCart
             "water" -> Icons.Rounded.WaterDrop
             "electricity", "power" -> Icons.Rounded.Bolt

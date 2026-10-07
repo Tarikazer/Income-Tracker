@@ -219,59 +219,8 @@ class FinanceViewModel(
         allCategories,
         language
     ) { expenses, categories, lang ->
-        val total = expenses.sumOf { it.amount }
-        val categoryMap = categories.associateBy { it.id }
-
-        val knownCategoryExpenses = mutableMapOf<CategoryEntity, MutableList<ExpenseEntity>>()
-        val separatePurchases = mutableListOf<ExpenseEntity>()
-
-        for (expense in expenses) {
-            val cat = categoryMap[expense.categoryId]
-            if (cat != null) {
-                knownCategoryExpenses.getOrPut(cat) { mutableListOf() }.add(expense)
-            } else {
-                separatePurchases.add(expense)
-            }
-        }
-
-        val list = mutableListOf<CategoryExpenseBreakdown>()
-        for ((cat, catExpenses) in knownCategoryExpenses) {
-            val sum = catExpenses.sumOf { it.amount }
-            val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
-            list.add(
-                CategoryExpenseBreakdown(
-                    category = cat,
-                    totalAmount = sum,
-                    percentage = pct,
-                    count = catExpenses.size
-                )
-            )
-        }
-
-        if (separatePurchases.isNotEmpty()) {
-            val separateName = if (lang == AppLanguage.FRENCH) "Achats séparés" else "Separate Purchases"
-            val separateCategory = CategoryEntity(
-                id = 0L,
-                name = separateName,
-                iconKey = "shopping",
-                isRecurring = false,
-                colorHex = 0xFF64748BL, // neutral slate color
-                householdId = 1,
-                displayOrder = 999
-            )
-            val sum = separatePurchases.sumOf { it.amount }
-            val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
-            list.add(
-                CategoryExpenseBreakdown(
-                    category = separateCategory,
-                    totalAmount = sum,
-                    percentage = pct,
-                    count = separatePurchases.size
-                )
-            )
-        }
-
-        list.sortedByDescending { it.totalAmount }
+        val separateName = if (lang == AppLanguage.FRENCH) "Achats séparés" else "Separate Purchases"
+        computeCategoryBreakdown(expenses, categories, separateName)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -489,7 +438,9 @@ class FinanceViewModel(
 
     fun addIncome(amount: Double, source: String? = null, isRecurring: Boolean = true) {
         viewModelScope.launch {
-            val currentIncomes = monthlyIncomes.value
+            val now = System.currentTimeMillis()
+            val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
+            val existingIncomes = repository.getIncomesForMonthOnce(incomeMonthYear)
             val label = if (!source.isNullOrBlank() &&
                 !source.equals("Monthly income", ignoreCase = true) &&
                 !source.equals("Monthly Income", ignoreCase = true) &&
@@ -498,10 +449,8 @@ class FinanceViewModel(
             ) {
                 source.trim()
             } else {
-                if (currentIncomes.isEmpty()) "Monthly Income" else "Other Incomes"
+                if (existingIncomes.isEmpty()) "Monthly Income" else "Other Incomes"
             }
-            val now = System.currentTimeMillis()
-            val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
             repository.addIncome(
                 IncomeEntity(
                     source = label,
@@ -519,19 +468,19 @@ class FinanceViewModel(
 
     fun addIncomeWithSource(source: String, amount: Double, isRecurring: Boolean = true) {
         viewModelScope.launch {
-            val currentIncomes = monthlyIncomes.value
+            val now = System.currentTimeMillis()
+            val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
+            val existingIncomes = repository.getIncomesForMonthOnce(incomeMonthYear)
             val label = if (source.isBlank() ||
                 source.equals("Monthly income", ignoreCase = true) ||
                 source.equals("Monthly Income", ignoreCase = true) ||
                 source.equals("Other Incomes", ignoreCase = true) ||
                 source.equals("Other Income", ignoreCase = true)
             ) {
-                if (currentIncomes.isEmpty()) "Monthly Income" else "Other Incomes"
+                if (existingIncomes.isEmpty()) "Monthly Income" else "Other Incomes"
             } else {
                 source.trim()
             }
-            val now = System.currentTimeMillis()
-            val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
             repository.addIncome(
                 IncomeEntity(
                     source = label,
@@ -645,6 +594,65 @@ class FinanceViewModel(
     }
 
     companion object {
+        fun computeCategoryBreakdown(
+            expenses: List<ExpenseEntity>,
+            categories: List<CategoryEntity>,
+            separateName: String
+        ): List<CategoryExpenseBreakdown> {
+            val total = expenses.sumOf { it.amount }
+            val categoryMap = categories.associateBy { it.id }
+
+            val knownCategoryExpenses = mutableMapOf<CategoryEntity, MutableList<ExpenseEntity>>()
+            val separatePurchases = mutableListOf<ExpenseEntity>()
+
+            for (expense in expenses) {
+                val cat = categoryMap[expense.categoryId]
+                if (cat != null) {
+                    knownCategoryExpenses.getOrPut(cat) { mutableListOf() }.add(expense)
+                } else {
+                    separatePurchases.add(expense)
+                }
+            }
+
+            val list = mutableListOf<CategoryExpenseBreakdown>()
+            for ((cat, catExpenses) in knownCategoryExpenses) {
+                val sum = catExpenses.sumOf { it.amount }
+                val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
+                list.add(
+                    CategoryExpenseBreakdown(
+                        category = cat,
+                        totalAmount = sum,
+                        percentage = pct,
+                        count = catExpenses.size
+                    )
+                )
+            }
+
+            if (separatePurchases.isNotEmpty()) {
+                val separateCategory = CategoryEntity(
+                    id = 0L,
+                    name = separateName,
+                    iconKey = "shopping",
+                    isRecurring = false,
+                    colorHex = 0xFF64748BL, // neutral slate color
+                    householdId = 1,
+                    displayOrder = 999
+                )
+                val sum = separatePurchases.sumOf { it.amount }
+                val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
+                list.add(
+                    CategoryExpenseBreakdown(
+                        category = separateCategory,
+                        totalAmount = sum,
+                        percentage = pct,
+                        count = separatePurchases.size
+                    )
+                )
+            }
+
+            return list.sortedByDescending { it.totalAmount }
+        }
+
         fun groupExpensesByDay(expenses: List<ExpenseEntity>): List<DailyExpenseGroup> {
             val sorted = expenses.sortedByDescending { it.dateTimestamp }
             val dayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)

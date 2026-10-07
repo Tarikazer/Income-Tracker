@@ -63,6 +63,9 @@ interface IncomeDao {
     @Query("SELECT * FROM incomes WHERE monthYear = :monthYear ORDER BY CASE WHEN source LIKE '%Monthly Income%' THEN 0 ELSE 1 END, id ASC, dateTimestamp ASC")
     fun getIncomesForMonth(monthYear: String): Flow<List<IncomeEntity>>
 
+    @Query("SELECT * FROM incomes WHERE monthYear = :monthYear ORDER BY CASE WHEN source LIKE '%Monthly Income%' THEN 0 ELSE 1 END, id ASC, dateTimestamp ASC")
+    suspend fun getIncomesForMonthList(monthYear: String): List<IncomeEntity>
+
     @Query("SELECT * FROM incomes ORDER BY CASE WHEN source LIKE '%Monthly Income%' THEN 0 ELSE 1 END, id ASC, dateTimestamp ASC")
     fun getAllIncomes(): Flow<List<IncomeEntity>>
 

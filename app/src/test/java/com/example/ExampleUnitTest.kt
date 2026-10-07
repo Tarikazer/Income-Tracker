@@ -96,7 +96,6 @@ class ExampleUnitTest {
             displayOrder = 0
         )
         val categories = listOf(category1)
-        val categoryMap = categories.associateBy { it.id }
 
         // One category expense (60.0) and one separate purchase (40.0) with categoryId = 0
         val expenses = listOf(
@@ -126,54 +125,12 @@ class ExampleUnitTest {
             )
         )
 
-        val total = expenses.sumOf { it.amount }
-        val knownCategoryExpenses = mutableMapOf<CategoryEntity, MutableList<ExpenseEntity>>()
-        val separatePurchases = mutableListOf<ExpenseEntity>()
-
-        for (expense in expenses) {
-            val cat = categoryMap[expense.categoryId]
-            if (cat != null) {
-                knownCategoryExpenses.getOrPut(cat) { mutableListOf() }.add(expense)
-            } else {
-                separatePurchases.add(expense)
-            }
-        }
-
-        val list = mutableListOf<CategoryExpenseBreakdown>()
-        for ((cat, catExpenses) in knownCategoryExpenses) {
-            val sum = catExpenses.sumOf { it.amount }
-            val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
-            list.add(
-                CategoryExpenseBreakdown(
-                    category = cat,
-                    totalAmount = sum,
-                    percentage = pct,
-                    count = catExpenses.size
-                )
-            )
-        }
-
-        if (separatePurchases.isNotEmpty()) {
-            val separateCategory = CategoryEntity(
-                id = 0L,
-                name = "Separate Purchases",
-                iconKey = "shopping",
-                isRecurring = false,
-                colorHex = 0xFF64748BL,
-                householdId = 1,
-                displayOrder = 999
-            )
-            val sum = separatePurchases.sumOf { it.amount }
-            val pct = if (total > 0) ((sum / total) * 100).toFloat() else 0f
-            list.add(
-                CategoryExpenseBreakdown(
-                    category = separateCategory,
-                    totalAmount = sum,
-                    percentage = pct,
-                    count = separatePurchases.size
-                )
-            )
-        }
+        // Call the real pure function extracted in FinanceViewModel
+        val list = FinanceViewModel.computeCategoryBreakdown(
+            expenses = expenses,
+            categories = categories,
+            separateName = "Separate Purchases"
+        )
 
         assertEquals(2, list.size)
         val rentBreakdown = list.first { it.category.id == 1L }

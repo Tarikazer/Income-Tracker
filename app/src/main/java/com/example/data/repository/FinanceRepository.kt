@@ -52,6 +52,10 @@ class FinanceRepository(
         return incomeDao.getIncomesForMonth(monthYear)
     }
 
+    suspend fun getIncomesForMonthOnce(monthYear: String): List<IncomeEntity> {
+        return incomeDao.getIncomesForMonthList(monthYear)
+    }
+
     suspend fun addIncome(income: IncomeEntity): Long {
         return incomeDao.insertIncome(income)
     }

@@ -11,7 +11,7 @@
         android:translateX="1.85185"
         android:translateY="1.85185">
 
-        <!-- Left / Back Banknote (tilted silhouette) -->
+        <!-- Left / Back Banknote (peeking outline silhouette) -->
         <group
             android:pivotX="214"
             android:pivotY="209"
@@ -21,10 +21,11 @@
                 android:strokeColor="#FFFFFF"
                 android:strokeWidth="11"
                 android:strokeLineJoin="round"
-                android:pathData="M 173,182 h 82 a 8,8 0 0,1 8,8 v 38 a 8,8 0 0,1 -8,8 h -82 a 8,8 0 0,1 -8,-8 v -38 a 8,8 0 0,1 8,-8 Z" />
+                android:strokeLineCap="round"
+                android:pathData="M 206,182 h -25 a 8,8 0 0,0 -8,8 v 30" />
         </group>
 
-        <!-- Right / Front Banknote (tilted silhouette with inner circle) -->
+        <!-- Right / Front Banknote (tilted outline silhouette with inner circle) -->
         <group
             android:pivotX="247"
             android:pivotY="187"
@@ -40,23 +41,15 @@
                 android:pathData="M 247,176 a 11,11 0 1,0 0,22 a 11,11 0 1,0 0,-22 Z" />
         </group>
 
-        <!-- Wallet body (solid rounded-rectangle) -->
+        <!-- Wallet body (solid rounded-rectangle with notch for clasp separation) -->
         <path
             android:fillColor="#FFFFFF"
-            android:pathData="M 196,238 h 112 a 26,26 0 0,1 26,26 v 90 a 26,26 0 0,1 -26,26 h -112 a 26,26 0 0,1 -26,-26 v -90 a 26,26 0 0,1 26,-26 Z" />
+            android:pathData="M 196,238 h 112 a 26,26 0 0,1 26,26 v 24 H 284 a 29,29 0 0,0 0,58 H 334 v 8 a 26,26 0 0,1 -26,26 h -112 a 26,26 0 0,1 -26,-26 v -90 a 26,26 0 0,1 26,-26 Z" />
 
-        <!-- Clasp tab on the right side -->
+        <!-- Clasp tab with real hole for the button using evenOdd fill -->
         <path
             android:fillColor="#FFFFFF"
-            android:strokeColor="#000000"
-            android:strokeWidth="5"
-            android:strokeLineJoin="round"
-            android:strokeLineCap="round"
-            android:pathData="M 334,293 H 290 A 24,24 0 0,0 290,341 H 334 Z" />
-
-        <!-- Small button circle on the tab -->
-        <path
-            android:fillColor="#000000"
-            android:pathData="M 298,308.5 a 8.5,8.5 0 1,0 0,17 a 8.5,8.5 0 1,0 0,-17 Z" />
+            android:fillType="evenOdd"
+            android:pathData="M 334,293 H 290 A 24,24 0 0,0 290,341 H 334 Z M 298,308.5 A 8.5,8.5 0 1,0 298,325.5 A 8.5,8.5 0 1,0 298,308.5 Z" />
     </group>
 </vector>
