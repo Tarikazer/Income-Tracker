@@ -1,5 +1,30 @@
 # APK Version Release Log
 
+## Version 1.10 (Version Code: 11)
+- **File**: `IncomeControl-v1.10.apk` (and `app-latest.apk`)
+- **Date**: October 8, 2026
+- **Package**: `com.aistudio.incomecontrol.tkrzq`
+
+### Features & Updates in v1.10:
+1. **Part A: Prepaid / Advance Multi-Month Payment Coverage**:
+   - Added `coversMonths: Int = 1` to `ExpenseEntity` with database schema migration `MIGRATION_4_5` (`ALTER TABLE expenses ADD COLUMN coversMonths INTEGER NOT NULL DEFAULT 1`).
+   - Advance payment covers future months without double-counting amounts in totals, statistics, summaries, or monthly budgets.
+   - Selectable duration chips (1, 2, 3, 6, 12 months) with dynamic date range preview in `AddCategoryExpenseDialog` and `EditShoppingExpenseDialog` (within 24h window).
+   - "Already paid · covered until [Month]" green check badge on covered `CategoryCard` with confirmation dialog when adding an expense in a covered month.
+   - Paying expense row displays coverage duration chip (e.g. "3 months" / "3 mois").
+   - `CategoryHistoryDialog` displays read-only coverage attribution note when covered and no expenses exist.
+   - Backup export & import supports `coversMonths` round trip persistence with backwards compatibility (`optInt("coversMonths", 1)`).
+2. **Part B: Edit Transaction Dialog Layout & Usability Polish**:
+   - Replaced cramped two-column Date & Time input row with a unified, full-width, singleLine read-only field displaying formatted date and time (`Oct 7, 2026 · 09:23`), with calendar and lock icons.
+   - Enabled `verticalScroll` on dialog content for small screens and accessibility font scales (360dp width and 1.3+ font scale).
+   - Replaced hardcoded dark styling with theme-aware `EmeraldSurfaceElevated`, `EmeraldCardBorder`, and `TextSecondary`.
+3. **Part C: Light Theme High-Contrast Polish**:
+   - Added `accent: Color` theme token to `AppColors` (`LightAppColors.accent = Color(0xFF176FA3)`, `DarkAppColors.accent = Color(0xFFD3E8F8)`), exposed as `AccentOnSurface`.
+   - Eliminated light-on-light illegibility in Light theme across `ExpenseItemRow`, `CategoryCard`, `StatisticsScreen`, `Charts`, `HomeScreen`, `BudgetScreen`, and `Dialogs`.
+   - Maintained all dark theme aesthetics and gradient cards intact.
+
+---
+
 ## Version 1.9 (Version Code: 10)
 - **File**: `IncomeControl-v1.9.apk` (and `app-latest.apk`)
 - **Date**: October 7, 2026

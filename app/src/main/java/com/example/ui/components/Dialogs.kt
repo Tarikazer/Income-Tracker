@@ -38,6 +38,7 @@ val MintButtonColor: Color @Composable get() = LocalAppColors.current.buttonBack
 val MintButtonTextColor: Color @Composable get() = LocalAppColors.current.buttonText
 val DialogSurfaceColor: Color @Composable get() = LocalAppColors.current.dialogSurface
 val DialogBorderColor: Color @Composable get() = LocalAppColors.current.dialogBorder
+val DefaultUnfocusedBorderColor: Color @Composable get() = if (LocalAppColors.current.isDark) Color(0xFF354B42) else EmeraldCardBorder
 
 /**
  * Add Income Dialog matching user's Screenshot 1:
@@ -86,15 +87,32 @@ fun AddIncomeDialog(
                             fontSize = 20.sp
                         )
                     )
+                    val isDarkTheme = LocalAppColors.current.isDark
+                    val badgeContainerColor = if (isDarkTheme) {
+                        if (isFirstIncome) Color(0xFF1B3D30) else Color(0xFF1E353B)
+                    } else {
+                        EmeraldPrimaryLight.copy(alpha = 0.35f)
+                    }
+                    val badgeBorderColor = if (isDarkTheme) {
+                        if (isFirstIncome) Color(0xFF2C634F) else Color(0xFF2E535C)
+                    } else {
+                        EmeraldCardBorder
+                    }
+                    val badgeTextColor = if (isDarkTheme) {
+                        if (isFirstIncome) Color(0xFF7DE0BA) else Color(0xFF67E8F9)
+                    } else {
+                        AccentOnSurface
+                    }
+
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (isFirstIncome) Color(0xFF1B3D30) else Color(0xFF1E353B),
-                        border = BorderStroke(1.dp, if (isFirstIncome) Color(0xFF2C634F) else Color(0xFF2E535C))
+                        color = badgeContainerColor,
+                        border = BorderStroke(1.dp, badgeBorderColor)
                     ) {
                         Text(
                             text = incomeCategoryLabel,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = if (isFirstIncome) Color(0xFF7DE0BA) else Color(0xFF67E8F9),
+                                color = badgeTextColor,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.5.sp
                             ),
@@ -1243,6 +1261,7 @@ fun EditShoppingExpenseDialog(
                         )
                     )
 
+                    val isDark = LocalAppColors.current.isDark
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1271,11 +1290,11 @@ fun EditShoppingExpenseDialog(
                             },
                             colors = OutlinedTextFieldDefaults.colors(
                                 disabledTextColor = TextSecondary,
-                                disabledBorderColor = Color(0xFF284C3E).copy(alpha = 0.6f),
+                                disabledBorderColor = if (isDark) Color(0xFF284C3E).copy(alpha = 0.6f) else EmeraldCardBorder,
                                 disabledLabelColor = TextMuted,
                                 disabledLeadingIconColor = TextMuted,
                                 disabledTrailingIconColor = TextMuted,
-                                disabledContainerColor = Color(0xFF101E1A)
+                                disabledContainerColor = if (isDark) Color(0xFF101E1A) else EmeraldSurfaceElevated
                             ),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
@@ -1307,11 +1326,11 @@ fun EditShoppingExpenseDialog(
                             },
                             colors = OutlinedTextFieldDefaults.colors(
                                 disabledTextColor = TextSecondary,
-                                disabledBorderColor = Color(0xFF284C3E).copy(alpha = 0.6f),
+                                disabledBorderColor = if (isDark) Color(0xFF284C3E).copy(alpha = 0.6f) else EmeraldCardBorder,
                                 disabledLabelColor = TextMuted,
                                 disabledLeadingIconColor = TextMuted,
                                 disabledTrailingIconColor = TextMuted,
-                                disabledContainerColor = Color(0xFF101E1A)
+                                disabledContainerColor = if (isDark) Color(0xFF101E1A) else EmeraldSurfaceElevated
                             ),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier

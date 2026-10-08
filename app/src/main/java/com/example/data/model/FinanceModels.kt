@@ -45,7 +45,8 @@ data class ExpenseEntity(
     val monthYear: String, // e.g. "2026-10"
     val note: String = "",
     val isRecurring: Boolean = false,
-    val householdId: Long = 1
+    val householdId: Long = 1,
+    val coversMonths: Int = 1
 ) {
     val createdAt: Long get() = dateTimestamp
 }
@@ -83,4 +84,10 @@ data class DailyExpenseGroup(
     val dayTitle: String,
     val dayTotal: Double,
     val expenses: List<ExpenseEntity>
+)
+
+data class CategoryCoverage(
+    val categoryId: Long,
+    val coveringExpense: ExpenseEntity,
+    val endMonthYear: String // e.g. "2026-12"
 )

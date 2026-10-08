@@ -120,7 +120,7 @@ fun StatisticsScreen(
                         Icon(
                             imageVector = Icons.Rounded.Share,
                             contentDescription = "Share report",
-                            tint = EmeraldPrimaryLight
+                            tint = AccentOnSurface
                         )
                     }
                 }
@@ -157,7 +157,7 @@ fun StatisticsScreen(
                             value = formatCurrency(savings, household.currency),
                             subtitle = "$savingsRate% of income",
                             icon = Icons.Rounded.Savings,
-                            accentColor = EmeraldPrimaryLight,
+                            accentColor = AccentOnSurface,
                             modifier = Modifier.weight(1f)
                         )
                         MetricCard(

@@ -90,7 +90,8 @@ class ExampleRobolectricTest {
             dateTimestamp = 1791280000000L,
             monthYear = "2026-10",
             note = "Annual subscription installment",
-            isRecurring = true
+            isRecurring = true,
+            coversMonths = 3
         )
         db.expenseDao().insertExpense(testExpense)
 
@@ -101,6 +102,7 @@ class ExampleRobolectricTest {
         assertTrue(exportedJson.contains("TestCategory"))
         assertTrue(exportedJson.contains("Gym Membership"))
         assertTrue(exportedJson.contains("Monthly Salary"))
+        assertTrue(exportedJson.contains("coversMonths") && exportedJson.contains("3"))
 
         // 3. Clear database to simulate data restore into empty or new state
         db.expenseDao().clearAllExpenses()
@@ -119,6 +121,7 @@ class ExampleRobolectricTest {
         assertEquals("Gym Membership", restoredExpenses[0].title)
         assertEquals(300.0, restoredExpenses[0].amount, 0.001)
         assertEquals(10L, restoredExpenses[0].categoryId)
+        assertEquals(3, restoredExpenses[0].coversMonths)
 
         val restoredCategories = db.categoryDao().getCategoriesList()
         val restoredCategory = restoredCategories.find { it.id == 10L }

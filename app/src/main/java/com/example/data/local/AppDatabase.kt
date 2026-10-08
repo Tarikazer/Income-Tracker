@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
         IncomeEntity::class,
         ExpenseEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

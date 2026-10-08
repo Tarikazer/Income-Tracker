@@ -14,6 +14,12 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  *     }
  * }
  */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE expenses ADD COLUMN coversMonths INTEGER NOT NULL DEFAULT 1")
+    }
+}
+
 val ALL_MIGRATIONS: Array<Migration> = arrayOf(
-    // Register future migrations here, e.g. MIGRATION_4_5
+    MIGRATION_4_5
 )

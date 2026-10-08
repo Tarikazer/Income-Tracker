@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CategoryWithSpent
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.util.Locale
 
 @Composable
@@ -31,10 +32,12 @@ fun CategoryCard(
     onViewHistory: () -> Unit,
     onReorder: () -> Unit,
     onDeleteCategory: () -> Unit,
+    coverage: com.example.data.model.CategoryCoverage? = null,
     modifier: Modifier = Modifier
 ) {
     val category = categoryData.category
     val spent = categoryData.spentAmount
+    val strings = LocalAppStrings.current
 
     Surface(
         modifier = modifier
@@ -153,7 +156,41 @@ fun CategoryCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            if (coverage != null) {
+                val endFormatted = com.example.util.AppConstants.formatMonthYear(coverage.endMonthYear, strings.isFrench)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = EmeraldPrimary.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.35f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 10.dp)
+                        .testTag("already_paid_badge_${category.id}")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.CheckCircle,
+                            contentDescription = null,
+                            tint = EmeraldPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = strings.alreadyPaidCoveredUntil(endFormatted),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(if (coverage != null) 4.dp else 14.dp))
 
             // Bottom Row: Total spent on left, + Add expense pill button on right
             Row(
@@ -172,7 +209,7 @@ fun CategoryCard(
                     Text(
                         text = "${String.format(Locale.US, "%,.2f", spent)} $currency",
                         style = MaterialTheme.typography.titleMedium.copy(
-                            color = Color.White,
+                            color = TextPrimary,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         ),
@@ -181,11 +218,16 @@ fun CategoryCard(
                 }
 
                 // "+ Add expense" pill button
+                val isDark = LocalAppColors.current.isDark
+                val pillContainerColor = if (isDark) Color(0xFF18382C) else EmeraldPrimary
+                val pillBorderColor = if (isDark) Color(0xFF285442) else EmeraldPrimaryDark
+                val pillContentColor = if (isDark) EmeraldPrimaryLight else Color.White
+
                 Surface(
                     onClick = onAddExpense,
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF18382C),
-                    border = BorderStroke(1.dp, Color(0xFF285442)),
+                    color = pillContainerColor,
+                    border = BorderStroke(1.dp, pillBorderColor),
                     modifier = Modifier.testTag("add_expense_btn_${category.id}")
                 ) {
                     Row(
@@ -196,13 +238,13 @@ fun CategoryCard(
                         Icon(
                             imageVector = Icons.Rounded.Add,
                             contentDescription = null,
-                            tint = EmeraldPrimaryLight,
+                            tint = pillContentColor,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "Add expense",
                             style = MaterialTheme.typography.labelMedium.copy(
-                                color = EmeraldPrimaryLight,
+                                color = pillContentColor,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp
                             )

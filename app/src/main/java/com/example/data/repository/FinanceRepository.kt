@@ -72,6 +72,50 @@ class FinanceRepository(
         return expenseDao.getAllExpenses()
     }
 
+    /**
+     * Coverage logic for multi-month advance payments (coversMonths > 1):
+     * A month M is "covered" for a category if there is an expense of that category with coversMonths > 1
+     * such that M is strictly after the expense's monthYear AND M <= expense.monthYear + (coversMonths - 1) months,
+     * AND the category has no expenses of its own in month M.
+     * If multiple expenses cover M, use the one with the latest end month.
+     */
+    fun getCoveredCategoriesForMonth(monthYear: String): Flow<Map<Long, CategoryCoverage>> {
+        return expenseDao.getAllExpenses().map { allExpenses ->
+            val expensesInSelectedMonth = allExpenses.filter { it.monthYear == monthYear }
+            val categoriesWithExpensesInMonth = expensesInSelectedMonth
+                .map { it.categoryId }
+                .filter { it != 0L }
+                .toSet()
+
+            // Candidates: expenses with coversMonths > 1 for real categories where monthYear is covered
+            val candidateExpenses = allExpenses.filter { exp ->
+                exp.categoryId != 0L &&
+                exp.coversMonths > 1 &&
+                monthYear > exp.monthYear &&
+                monthYear <= com.example.util.AppConstants.addMonths(exp.monthYear, exp.coversMonths - 1) &&
+                !categoriesWithExpensesInMonth.contains(exp.categoryId)
+            }
+
+            // Group by categoryId, pick the one with latest end month
+            val coverageMap = mutableMapOf<Long, CategoryCoverage>()
+            val groupedByCat = candidateExpenses.groupBy { it.categoryId }
+            for ((catId, expList) in groupedByCat) {
+                val bestExpense = expList.maxByOrNull { exp ->
+                    com.example.util.AppConstants.addMonths(exp.monthYear, exp.coversMonths - 1)
+                }
+                if (bestExpense != null) {
+                    val endMonth = com.example.util.AppConstants.addMonths(bestExpense.monthYear, bestExpense.coversMonths - 1)
+                    coverageMap[catId] = CategoryCoverage(
+                        categoryId = catId,
+                        coveringExpense = bestExpense,
+                        endMonthYear = endMonth
+                    )
+                }
+            }
+            coverageMap
+        }
+    }
+
     fun getCategorySpendingForMonth(monthYear: String): Flow<List<CategoryWithSpent>> {
         return combine(
             categoryDao.getAllCategories(),
@@ -324,6 +368,7 @@ class FinanceRepository(
             obj.put("note", exp.note)
             obj.put("isRecurring", exp.isRecurring)
             obj.put("householdId", exp.householdId)
+            obj.put("coversMonths", exp.coversMonths)
             expensesArray.put(obj)
         }
         root.put("expenses", expensesArray)
@@ -409,7 +454,8 @@ class FinanceRepository(
                             monthYear = obj.optString("monthYear", "2026-10"),
                             note = obj.optString("note", ""),
                             isRecurring = obj.optBoolean("isRecurring", false),
-                            householdId = obj.optLong("householdId", 1L)
+                            householdId = obj.optLong("householdId", 1L),
+                            coversMonths = obj.optInt("coversMonths", 1)
                         )
                     )
                 }

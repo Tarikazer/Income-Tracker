@@ -90,7 +90,7 @@ fun ExpenseItemRow(
                 Icon(
                     imageVector = IconHelper.getCategoryIcon(if (expense.categoryIconKey.isBlank() || expense.categoryIconKey == "alimentation") "shopping" else expense.categoryIconKey),
                     contentDescription = expense.title,
-                    tint = EmeraldPrimaryLight,
+                    tint = AccentOnSurface,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -172,7 +172,7 @@ fun ExpenseItemRow(
                 Text(
                     text = "- ${String.format(Locale.US, "%,.2f", expense.amount)} $currency",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.White,
+                        color = TextPrimary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.5.sp
                     ),
@@ -193,7 +193,7 @@ fun ExpenseItemRow(
                         Icon(
                             imageVector = Icons.Rounded.Edit,
                             contentDescription = "Edit item (24h window)",
-                            tint = EmeraldPrimaryLight,
+                            tint = AccentOnSurface,
                             modifier = Modifier.size(16.dp)
                         )
                     }

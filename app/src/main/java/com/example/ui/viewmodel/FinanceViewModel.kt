@@ -175,6 +175,15 @@ class FinanceViewModel(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    val categoryCoverageMap: StateFlow<Map<Long, CategoryCoverage>> = _selectedMonthYear
+        .flatMapLatest { month -> repository.getCoveredCategoriesForMonth(month) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val currentMonthExpenses: StateFlow<List<ExpenseEntity>> = _selectedMonthYear
         .flatMapLatest { month -> repository.getExpensesForMonth(month) }
         .stateIn(
@@ -405,7 +414,8 @@ class FinanceViewModel(
     fun addCategoryExpense(
         category: CategoryEntity,
         amount: Double,
-        note: String
+        note: String,
+        coversMonths: Int = 1
     ) {
         viewModelScope.launch {
             // Categories like Rent, Sport, Bills, Family are fixed expenses and stay in wallet section
@@ -427,7 +437,8 @@ class FinanceViewModel(
                     dateTimestamp = now,
                     monthYear = expenseMonthYear,
                     note = note.trim(),
-                    isRecurring = isFixedCategory
+                    isRecurring = isFixedCategory,
+                    coversMonths = coversMonths.coerceAtLeast(1)
                 )
             )
             if (_selectedMonthYear.value != expenseMonthYear) {
@@ -562,13 +573,20 @@ class FinanceViewModel(
         }
     }
 
-    fun updateShoppingExpense(expense: ExpenseEntity, newTitle: String, newAmount: Double, newNote: String) {
+    fun updateShoppingExpense(
+        expense: ExpenseEntity,
+        newTitle: String,
+        newAmount: Double,
+        newNote: String,
+        newCoversMonths: Int = expense.coversMonths
+    ) {
         viewModelScope.launch {
             repository.updateExpense(
                 expense.copy(
                     title = newTitle.trim(),
                     amount = newAmount,
-                    note = newNote.trim()
+                    note = newNote.trim(),
+                    coversMonths = newCoversMonths.coerceAtLeast(1)
                 )
             )
         }

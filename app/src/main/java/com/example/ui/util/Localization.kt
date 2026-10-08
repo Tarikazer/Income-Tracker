@@ -96,7 +96,7 @@ class AppStrings(val language: AppLanguage) {
     val restoreBackup = if (isFrench) "Restaurer une sauvegarde locale" else "Restore Local Backup"
     val backupDescription = if (isFrench) "Sauvegardez vos données hors-ligne sur votre appareil (Storage Access Framework)." else "Safely backup all your data offline to your device."
     val appInfoSection = if (isFrench) "À propos" else "About"
-    val versionLabel = "Version 1.9"
+    val versionLabel = "Version 1.10"
     val offlineSecure = if (isFrench) "100% Hors-ligne & Sécurisé (SQLite Local)" else "100% Offline & Private (Local SQLite)"
     val createdBy = if (isFrench) "Créé par Frost Dev" else "Created by Frost Dev"
     val developerLabel = if (isFrench) "Développeur" else "Developer"
@@ -106,6 +106,38 @@ class AppStrings(val language: AppLanguage) {
     val whatsapp = "WhatsApp"
     val copy = if (isFrench) "Copier" else "Copy"
     val numberCopied = if (isFrench) "Numéro copié (+212 693-780909)" else "Phone number copied (+212 693-780909)"
+
+    // Prepaid / Coverage Strings
+    val coversLabel = if (isFrench) "Couvre" else "Covers"
+    val month1 = if (isFrench) "1 mois" else "1 mo"
+    val months2 = if (isFrench) "2 mois" else "2 mos"
+    val months3 = if (isFrench) "3 mois" else "3 mos"
+    val months6 = if (isFrench) "6 mois" else "6 mos"
+    val months12 = if (isFrench) "12 mois" else "12 mos"
+    fun coversHelper(startMonth: String, endMonth: String): String {
+        return if (isFrench) "Couvre $startMonth → $endMonth" else "Covers $startMonth → $endMonth"
+    }
+    fun alreadyPaidCoveredUntil(endMonth: String): String {
+        return if (isFrench) "Déjà payé · couvert jusqu'à $endMonth" else "Already paid · covered until $endMonth"
+    }
+    fun coveredAddAnywayTitle(categoryName: String, endMonth: String): String {
+        return if (isFrench) {
+            "$categoryName est déjà payé jusqu'à $endMonth. Ajouter une autre dépense quand même ?"
+        } else {
+            "$categoryName is already paid until $endMonth. Add another expense anyway?"
+        }
+    }
+    val addAnyway = if (isFrench) "Ajouter quand même" else "Add anyway"
+    fun coveredByPaidIn(amountStr: String, currency: String, paidMonth: String): String {
+        return if (isFrench) {
+            "Couvert par $amountStr $currency payés en $paidMonth"
+        } else {
+            "Covered by $amountStr $currency paid in $paidMonth"
+        }
+    }
+    fun monthsBadge(count: Int): String {
+        return if (isFrench) "$count mois" else "$count months"
+    }
 
     // Category Deletion Confirmation
     val deleteCategoryTitle = if (isFrench) "Supprimer la catégorie ?" else "Delete Category?"

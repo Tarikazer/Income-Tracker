@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.data.local.MIGRATION_4_5
 import com.example.data.model.CategoryEntity
 import com.example.data.model.ExpenseEntity
 import com.example.ui.util.AppLanguage
@@ -9,8 +10,13 @@ import com.example.ui.viewmodel.FinanceViewModel
 import com.example.util.AppConstants
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.util.Calendar
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [36])
 class ExampleUnitTest {
 
     @Test
@@ -151,8 +157,8 @@ class ExampleUnitTest {
         assertEquals("Settings", enStrings.settingsTitle)
         assertEquals("Paramètres", frStrings.settingsTitle)
 
-        assertEquals("Version 1.9", enStrings.versionLabel)
-        assertEquals("Version 1.9", frStrings.versionLabel)
+        assertEquals("Version 1.10", enStrings.versionLabel)
+        assertEquals("Version 1.10", frStrings.versionLabel)
 
         assertEquals(
             "Delete Rent and its 3 purchases? This cannot be undone.",
@@ -162,5 +168,63 @@ class ExampleUnitTest {
             "Supprimer Loyer et ses 3 achats ? Cette action est irréversible.",
             frStrings.deleteCategoryConfirmation("Loyer", 3)
         )
+    }
+
+    @Test
+    fun testMigration4To5() {
+        val config = androidx.sqlite.db.SupportSQLiteOpenHelper.Configuration.builder(
+            androidx.test.core.app.ApplicationProvider.getApplicationContext()
+        )
+            .name(null) // in-memory
+            .callback(object : androidx.sqlite.db.SupportSQLiteOpenHelper.Callback(4) {
+                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                    db.execSQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS expenses (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                            title TEXT NOT NULL,
+                            amount REAL NOT NULL,
+                            categoryId INTEGER NOT NULL,
+                            categoryName TEXT NOT NULL,
+                            categoryIconKey TEXT NOT NULL,
+                            dateTimestamp INTEGER NOT NULL,
+                            monthYear TEXT NOT NULL,
+                            note TEXT NOT NULL,
+                            isRecurring INTEGER NOT NULL,
+                            householdId INTEGER NOT NULL
+                        )
+                        """.trimIndent()
+                    )
+                    db.execSQL(
+                        """
+                        INSERT INTO expenses (id, title, amount, categoryId, categoryName, categoryIconKey, dateTimestamp, monthYear, note, isRecurring, householdId)
+                        VALUES (1, 'Old Expense', 250.0, 5, 'Utilities', 'lightbulb', 1700000000000, '2026-10', 'Monthly bill', 0, 1)
+                        """.trimIndent()
+                    )
+                }
+
+                override fun onUpgrade(
+                    db: androidx.sqlite.db.SupportSQLiteDatabase,
+                    oldVersion: Int,
+                    newVersion: Int
+                ) {}
+            })
+            .build()
+
+        val helper = androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory().create(config)
+        val supportDb = helper.writableDatabase
+
+        // Run MIGRATION_4_5
+        MIGRATION_4_5.migrate(supportDb)
+
+        // Query the row and verify coversMonths = 1 and other columns are intact
+        val cursor = supportDb.query("SELECT id, title, amount, coversMonths FROM expenses WHERE id = 1")
+        assertTrue(cursor.moveToFirst())
+        assertEquals(1L, cursor.getLong(cursor.getColumnIndexOrThrow("id")))
+        assertEquals("Old Expense", cursor.getString(cursor.getColumnIndexOrThrow("title")))
+        assertEquals(250.0, cursor.getDouble(cursor.getColumnIndexOrThrow("amount")), 0.001)
+        assertEquals(1, cursor.getInt(cursor.getColumnIndexOrThrow("coversMonths")))
+        cursor.close()
+        supportDb.close()
     }
 }

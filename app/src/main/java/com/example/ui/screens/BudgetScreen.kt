@@ -518,7 +518,7 @@ private fun IncomeRow(
                 Icon(
                     imageVector = Icons.Rounded.TrendingUp,
                     contentDescription = null,
-                    tint = EmeraldPrimaryLight,
+                    tint = AccentOnSurface,
                     modifier = Modifier.size(18.dp)
                 )
                 Column {
@@ -548,7 +548,7 @@ private fun IncomeRow(
                 Text(
                     text = "+ ${String.format(Locale.US, "%,.2f", income.amount)} $currency",
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = EmeraldPrimaryLight,
+                        color = AccentOnSurface,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -683,7 +683,7 @@ private fun AddCategoryDialog(
                     Text(
                         text = "Create Category",
                         style = MaterialTheme.typography.titleMedium.copy(
-                            color = Color(0xFF032218),
+                            color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                     )

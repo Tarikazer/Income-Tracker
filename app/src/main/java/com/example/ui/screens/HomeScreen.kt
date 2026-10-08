@@ -341,7 +341,7 @@ fun HomeScreen(
                                 Icon(
                                     imageVector = Icons.Rounded.ReceiptLong,
                                     contentDescription = null,
-                                    tint = EmeraldPrimaryLight,
+                                    tint = AccentOnSurface,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }

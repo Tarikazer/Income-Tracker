@@ -492,7 +492,7 @@ fun SettingsScreen(
                                         Text(
                                             text = strings.developerPhone,
                                             style = MaterialTheme.typography.bodySmall.copy(
-                                                color = EmeraldPrimaryLight,
+                                                color = AccentOnSurface,
                                                 fontWeight = FontWeight.SemiBold
                                             )
                                         )

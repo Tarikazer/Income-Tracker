@@ -44,6 +44,7 @@ data class AppColors(
     val buttonText: Color,
     val dialogSurface: Color,
     val dialogBorder: Color,
+    val accent: Color,
     val summaryGradient: Brush,
     val budgetGradient: Brush,
     val fabGradient: Brush
@@ -67,6 +68,7 @@ val DarkAppColors = AppColors(
     buttonText = Color(0xFFFFFFFF),
     dialogSurface = Color(0xFF142436),
     dialogBorder = Color(0xFF274460),
+    accent = Color(0xFFD3E8F8),
     summaryGradient = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF13456B),
@@ -105,6 +107,7 @@ val LightAppColors = AppColors(
     buttonText = Color(0xFFFFFFFF),
     dialogSurface = Color(0xFFFFFFFF),
     dialogBorder = Color(0xFFD3E8F8),
+    accent = Color(0xFF176FA3),
     summaryGradient = Brush.verticalGradient(
         colors = listOf(
             Color(0xFF2B9CE0),
@@ -137,6 +140,7 @@ val EmeraldPrimary: Color @Composable get() = LocalAppColors.current.primary
 val EmeraldPrimaryDark: Color @Composable get() = LocalAppColors.current.primaryDark
 val EmeraldPrimaryLight: Color @Composable get() = LocalAppColors.current.primaryLight
 val EmeraldCyan: Color @Composable get() = LocalAppColors.current.cyan
+val AccentOnSurface: Color @Composable get() = LocalAppColors.current.accent
 
 val TextPrimary: Color @Composable get() = LocalAppColors.current.textPrimary
 val TextSecondary: Color @Composable get() = LocalAppColors.current.textSecondary

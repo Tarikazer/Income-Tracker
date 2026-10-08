@@ -524,7 +524,7 @@ fun CategorySpendingReport(
                             Text(
                                 text = "$pct%",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = EmeraldPrimaryLight,
+                                    color = AccentOnSurface,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp
                                 )
@@ -533,6 +533,7 @@ fun CategorySpendingReport(
 
                         Spacer(modifier = Modifier.height(6.dp))
 
+                        val isDarkTheme = LocalAppColors.current.isDark
                         LinearProgressIndicator(
                             progress = { ratio.toFloat().coerceIn(0f, 1f) },
                             modifier = Modifier
@@ -540,7 +541,7 @@ fun CategorySpendingReport(
                                 .height(6.dp)
                                 .clip(RoundedCornerShape(3.dp)),
                             color = Color(item.category.colorHex),
-                            trackColor = Color(0xFF20372F)
+                            trackColor = if (isDarkTheme) Color(0xFF20372F) else EmeraldCardBorder
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
