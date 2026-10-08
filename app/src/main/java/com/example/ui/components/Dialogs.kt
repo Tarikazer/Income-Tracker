@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -27,6 +29,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.CategoryEntity
 import com.example.data.model.ExpenseEntity
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import com.example.util.AppConstants
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -236,11 +239,16 @@ fun AddCategoryExpenseDialog(
     categoryName: String,
     currency: String,
     onDismiss: () -> Unit,
-    onSave: (amount: Double, note: String) -> Unit
+    onSave: (amount: Double, note: String, coversMonths: Int) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var amountText by remember { mutableStateOf("") }
     var noteText by remember { mutableStateOf("") }
+    var selectedCoversMonths by remember { mutableIntStateOf(1) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val currentMonthYear = remember {
+        SimpleDateFormat("yyyy-MM", Locale.US).format(Date())
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -255,10 +263,11 @@ fun AddCategoryExpenseDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(22.dp)
             ) {
                 Text(
-                    text = "Add expense",
+                    text = strings.addExpense,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = TextPrimary,
@@ -281,7 +290,7 @@ fun AddCategoryExpenseDialog(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
+                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
                         focusedLabelColor = MintButtonColor,
                         unfocusedLabelColor = TextSecondary,
                         cursorColor = MintButtonColor
@@ -305,16 +314,95 @@ fun AddCategoryExpenseDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                // Covers Multi-Month Selectable Chips
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = strings.coversLabel,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        ),
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+
+                    val monthOptions = listOf(
+                        1 to strings.month1,
+                        2 to strings.months2,
+                        3 to strings.months3,
+                        6 to strings.months6,
+                        12 to strings.months12
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        monthOptions.forEach { (months, label) ->
+                            val isSelected = selectedCoversMonths == months
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) EmeraldPrimary else EmeraldPrimary.copy(alpha = 0.08f),
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) EmeraldPrimaryDark else EmeraldCardBorder
+                                ),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedCoversMonths = months }
+                                    .testTag("covers_chip_$months")
+                            ) {
+                                Box(
+                                    modifier = Modifier.padding(vertical = 7.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = if (isSelected) Color.White else TextPrimary,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            fontSize = 11.sp
+                                        ),
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (selectedCoversMonths > 1) {
+                        val startFormatted = AppConstants.formatMonthYear(currentMonthYear, strings.isFrench)
+                        val endMonthYear = AppConstants.addMonths(currentMonthYear, selectedCoversMonths - 1)
+                        val endFormatted = AppConstants.formatMonthYear(endMonthYear, strings.isFrench)
+                        Text(
+                            text = strings.coversHelper(startFormatted, endFormatted),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = AccentOnSurface,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            ),
+                            modifier = Modifier
+                                .padding(start = 4.dp, top = 2.dp)
+                                .testTag("covers_helper_text")
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
-                    placeholder = { Text("Note (optional)") },
+                    placeholder = { Text(strings.noteOptionalLabel) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
+                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
                         focusedPlaceholderColor = TextMuted,
                         unfocusedPlaceholderColor = TextMuted,
                         cursorColor = MintButtonColor
@@ -346,7 +434,7 @@ fun AddCategoryExpenseDialog(
                         modifier = Modifier.testTag("expense_cancel_button")
                     ) {
                         Text(
-                            text = "Cancel",
+                            text = strings.cancel,
                             style = MaterialTheme.typography.labelLarge.copy(
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Medium,
@@ -364,7 +452,7 @@ fun AddCategoryExpenseDialog(
                                 errorMessage = "Please enter a valid amount."
                                 return@Button
                             }
-                            onSave(amount, noteText)
+                            onSave(amount, noteText, selectedCoversMonths)
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MintButtonColor,
@@ -375,7 +463,7 @@ fun AddCategoryExpenseDialog(
                         modifier = Modifier.testTag("save_category_expense_button")
                     ) {
                         Text(
-                            text = "Save",
+                            text = strings.save,
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 15.sp
@@ -425,6 +513,7 @@ fun AddShoppingExpenseDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(22.dp)
             ) {
                 Text(
@@ -1142,8 +1231,9 @@ fun EditShoppingExpenseDialog(
     expense: ExpenseEntity,
     currency: String,
     onDismiss: () -> Unit,
-    onSave: (title: String, amount: Double, note: String) -> Unit
+    onSave: (title: String, amount: Double, note: String, coversMonths: Int) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var title by remember { mutableStateOf(expense.title) }
     var amountText by remember {
         mutableStateOf(
@@ -1154,6 +1244,7 @@ fun EditShoppingExpenseDialog(
         )
     }
     var note by remember { mutableStateOf(expense.note) }
+    var selectedCoversMonths by remember { mutableIntStateOf(expense.coversMonths.coerceAtLeast(1)) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.US) }
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.US) }
@@ -1173,6 +1264,7 @@ fun EditShoppingExpenseDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(22.dp)
             ) {
                 Row(
@@ -1181,7 +1273,7 @@ fun EditShoppingExpenseDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Edit Transaction",
+                        text = strings.editPurchaseTitle,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
@@ -1189,7 +1281,7 @@ fun EditShoppingExpenseDialog(
                         )
                     )
                     Text(
-                        text = if (isEditable) "$remainingHours h left to edit" else "Locked (>24h)",
+                        text = if (isEditable) "$remainingHours h left to edit" else strings.locked,
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = if (isEditable) EmeraldCyan else Color(0xFFFBBF24),
                             fontSize = 11.5.sp,
@@ -1206,13 +1298,14 @@ fun EditShoppingExpenseDialog(
                         title = it
                         errorMessage = null
                     },
-                    label = { Text("Title / Item Name") },
+                    label = { Text(strings.purchaseNameLabel) },
                     singleLine = true,
+                    enabled = isEditable,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
+                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
                         focusedLabelColor = MintButtonColor,
                         unfocusedLabelColor = TextSecondary,
                         cursorColor = MintButtonColor
@@ -1232,11 +1325,12 @@ fun EditShoppingExpenseDialog(
                     label = { Text(currency) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
+                    enabled = isEditable,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
+                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
                         focusedLabelColor = MintButtonColor,
                         unfocusedLabelColor = TextSecondary,
                         cursorColor = MintButtonColor
@@ -1245,102 +1339,138 @@ fun EditShoppingExpenseDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Read-only Date & Time section (disabled fields)
+                // Covers Multi-Month Selectable Chips (ONLY when expense belongs to a real category: categoryId != 0)
+                if (expense.categoryId != 0L) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = strings.coversLabel,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 12.sp
+                            ),
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+
+                        val monthOptions = listOf(
+                            1 to strings.month1,
+                            2 to strings.months2,
+                            3 to strings.months3,
+                            6 to strings.months6,
+                            12 to strings.months12
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            monthOptions.forEach { (months, label) ->
+                                val isSelected = selectedCoversMonths == months
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (isSelected) EmeraldPrimary else EmeraldPrimary.copy(alpha = 0.08f),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) EmeraldPrimaryDark else EmeraldCardBorder
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable(enabled = isEditable) {
+                                            selectedCoversMonths = months
+                                        }
+                                        .testTag("edit_covers_chip_$months")
+                                ) {
+                                    Box(
+                                        modifier = Modifier.padding(vertical = 7.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                color = if (isSelected) Color.White else TextPrimary,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                fontSize = 11.sp
+                                            ),
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (selectedCoversMonths > 1) {
+                            val startFormatted = AppConstants.formatMonthYear(expense.monthYear, strings.isFrench)
+                            val endMonthYear = AppConstants.addMonths(expense.monthYear, selectedCoversMonths - 1)
+                            val endFormatted = AppConstants.formatMonthYear(endMonthYear, strings.isFrench)
+                            Text(
+                                text = strings.coversHelper(startFormatted, endFormatted),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = AccentOnSurface,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp
+                                ),
+                                modifier = Modifier
+                                    .padding(start = 4.dp, top = 2.dp)
+                                    .testTag("edit_covers_helper_text")
+                            )
+                        }
+                    }
+                }
+
+                // Unified Read-only Date & Time section (single full-width singleLine field)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = "Date & Time (Read-only)",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 12.sp
-                        )
+                    val dateFormatted = dateFormat.format(Date(expense.dateTimestamp))
+                    val timeFormatted = timeFormat.format(Date(expense.dateTimestamp))
+                    val dateTimeFormatted = "$dateFormatted · $timeFormatted"
+
+                    OutlinedTextField(
+                        value = dateTimeFormatted,
+                        onValueChange = {},
+                        enabled = false,
+                        readOnly = true,
+                        singleLine = true,
+                        label = { Text(strings.dateTimeLabel) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarToday,
+                                contentDescription = null,
+                                tint = TextMuted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Lock,
+                                contentDescription = "Read-only date and time",
+                                tint = TextMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = TextSecondary,
+                            disabledBorderColor = EmeraldCardBorder,
+                            disabledLabelColor = TextMuted,
+                            disabledLeadingIconColor = TextMuted,
+                            disabledTrailingIconColor = TextMuted,
+                            disabledContainerColor = EmeraldSurfaceElevated
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("edit_expense_date_readonly")
                     )
 
-                    val isDark = LocalAppColors.current.isDark
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = dateFormat.format(Date(expense.dateTimestamp)),
-                            onValueChange = {},
-                            enabled = false,
-                            readOnly = true,
-                            label = { Text("Date") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.CalendarToday,
-                                    contentDescription = null,
-                                    tint = TextMuted,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Lock,
-                                    contentDescription = "Read-only date",
-                                    tint = TextMuted,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                disabledTextColor = TextSecondary,
-                                disabledBorderColor = if (isDark) Color(0xFF284C3E).copy(alpha = 0.6f) else EmeraldCardBorder,
-                                disabledLabelColor = TextMuted,
-                                disabledLeadingIconColor = TextMuted,
-                                disabledTrailingIconColor = TextMuted,
-                                disabledContainerColor = if (isDark) Color(0xFF101E1A) else EmeraldSurfaceElevated
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .weight(1.3f)
-                                .testTag("edit_expense_date_readonly")
-                        )
-
-                        OutlinedTextField(
-                            value = timeFormat.format(Date(expense.dateTimestamp)),
-                            onValueChange = {},
-                            enabled = false,
-                            readOnly = true,
-                            label = { Text("Time") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Schedule,
-                                    contentDescription = null,
-                                    tint = TextMuted,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Lock,
-                                    contentDescription = "Read-only time",
-                                    tint = TextMuted,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                disabledTextColor = TextSecondary,
-                                disabledBorderColor = if (isDark) Color(0xFF284C3E).copy(alpha = 0.6f) else EmeraldCardBorder,
-                                disabledLabelColor = TextMuted,
-                                disabledLeadingIconColor = TextMuted,
-                                disabledTrailingIconColor = TextMuted,
-                                disabledContainerColor = if (isDark) Color(0xFF101E1A) else EmeraldSurfaceElevated
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("edit_expense_time_readonly")
-                        )
-                    }
-
                     Text(
-                        text = "Date and time can only be set when created and cannot be edited.",
+                        text = strings.lockedHelper,
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = TextMuted,
                             fontSize = 11.sp
@@ -1354,13 +1484,14 @@ fun EditShoppingExpenseDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    placeholder = { Text("Note (optional)") },
+                    placeholder = { Text(strings.noteOptionalLabel) },
                     singleLine = true,
+                    enabled = isEditable,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
+                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
                         focusedPlaceholderColor = TextMuted,
                         unfocusedPlaceholderColor = TextMuted,
                         cursorColor = MintButtonColor
@@ -1386,7 +1517,7 @@ fun EditShoppingExpenseDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = TextPrimary)
+                        Text(strings.cancel, color = TextPrimary)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -1406,7 +1537,7 @@ fun EditShoppingExpenseDialog(
                                 errorMessage = "Please enter a valid amount."
                                 return@Button
                             }
-                            onSave(title.trim(), cleanAmount, note.trim())
+                            onSave(title.trim(), cleanAmount, note.trim(), selectedCoversMonths)
                         },
                         enabled = isEditable,
                         colors = ButtonDefaults.buttonColors(
@@ -1417,7 +1548,7 @@ fun EditShoppingExpenseDialog(
                         ),
                         shape = RoundedCornerShape(20.dp)
                     ) {
-                        Text(if (isEditable) "Update" else "Locked", fontWeight = FontWeight.SemiBold)
+                        Text(if (isEditable) strings.update else strings.locked, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

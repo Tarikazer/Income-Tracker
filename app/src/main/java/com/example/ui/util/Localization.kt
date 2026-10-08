@@ -73,6 +73,7 @@ class AppStrings(val language: AppLanguage) {
     val noteOptionalLabel = if (isFrench) "Note (optionnelle)" else "Note (optional)"
     val dateLabel = if (isFrench) "Date" else "Date"
     val timeLabel = if (isFrench) "Heure" else "Time"
+    val dateTimeLabel = if (isFrench) "Date et heure" else "Date & Time"
     val dateTimeHelper = if (isFrench) "Choisissez la date et l'heure de cet achat" else "Select the date and time of this purchase"
     val lockedHelper = if (isFrench) "Date et heure verrouillées après création (règle des 24h)" else "Date & time locked after creation (24h edit window)"
 

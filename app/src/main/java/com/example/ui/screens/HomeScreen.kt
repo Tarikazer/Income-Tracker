@@ -442,8 +442,8 @@ fun HomeScreen(
             expense = exp,
             currency = household.currency,
             onDismiss = { expenseToEdit = null },
-            onSave = { newTitle, newAmount, newNote ->
-                viewModel.updateShoppingExpense(exp, newTitle, newAmount, newNote)
+            onSave = { newTitle, newAmount, newNote, newCoversMonths ->
+                viewModel.updateShoppingExpense(exp, newTitle, newAmount, newNote, newCoversMonths)
                 expenseToEdit = null
             }
         )

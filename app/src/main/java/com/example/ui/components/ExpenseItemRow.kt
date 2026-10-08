@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ExpenseEntity
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import com.example.util.AppConstants
 import java.text.SimpleDateFormat
 import java.util.*
@@ -114,8 +115,28 @@ fun ExpenseItemRow(
                             fontSize = 15.sp
                         ),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
+                    if (expense.coversMonths > 1) {
+                        val strings = LocalAppStrings.current
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = EmeraldPrimary.copy(alpha = 0.15f),
+                            border = BorderStroke(0.5.dp, EmeraldPrimary.copy(alpha = 0.4f)),
+                            modifier = Modifier.testTag("expense_covers_chip_${expense.id}")
+                        ) {
+                            Text(
+                                text = strings.monthsBadge(expense.coversMonths),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = AccentOnSurface,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.5.sp
+                                ),
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
                     if (expense.isRecurring) {
                         Icon(
                             imageVector = Icons.Rounded.Sync,

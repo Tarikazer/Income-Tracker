@@ -227,4 +227,17 @@ class ExampleUnitTest {
         cursor.close()
         supportDb.close()
     }
+
+    @Test
+    fun testAddMonthsMathAndOverflowSafety() {
+        assertEquals("2027-01", AppConstants.addMonths("2026-11", 2))
+        assertEquals("2027-01", AppConstants.addMonths("2026-12", 1))
+        assertEquals("2027-03", AppConstants.addMonths("2027-02", 1))
+
+        // Test with Calendar currently at day 31 to verify it does not overflow shorter months
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_MONTH, 31)
+        val resultWhenDay31 = AppConstants.addMonths("2026-11", 2)
+        assertEquals("2027-01", resultWhenDay31)
+    }
 }

@@ -27,6 +27,7 @@ import com.example.ui.theme.*
 import com.example.ui.util.LocalAppStrings
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
+import com.example.util.AppConstants
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,9 +44,11 @@ fun BudgetScreen(
     val categoryProgressList by viewModel.categoryProgressList.collectAsState()
     val allCategories by viewModel.allCategories.collectAsState()
     val currentMonthExpenses by viewModel.currentMonthExpenses.collectAsState()
+    val categoryCoverageMap by viewModel.categoryCoverageMap.collectAsState()
 
     var showAddIncomeDialog by remember { mutableStateOf(false) }
     var categoryForAddExpense by remember { mutableStateOf<CategoryEntity?>(null) }
+    var coveredCategoryToAddAnyway by remember { mutableStateOf<CategoryEntity?>(null) }
     var showHouseholdDialog by remember { mutableStateOf(false) }
 
     var categoryForHistory by remember { mutableStateOf<CategoryEntity?>(null) }
@@ -285,11 +288,17 @@ fun BudgetScreen(
             // Category Cards matching screenshot 2:
             // Rent, Sport, Alimentation, Water Bill, Electricity Bill, Internet Bill, Family
             items(categoryProgressList, key = { it.category.id }) { catData ->
+                val coverage = categoryCoverageMap[catData.category.id]
                 CategoryCard(
                     categoryData = catData,
                     currency = household.currency,
+                    coverage = coverage,
                     onAddExpense = {
-                        categoryForAddExpense = catData.category
+                        if (coverage != null) {
+                            coveredCategoryToAddAnyway = catData.category
+                        } else {
+                            categoryForAddExpense = catData.category
+                        }
                     },
                     onViewHistory = {
                         categoryForHistory = catData.category
@@ -323,6 +332,54 @@ fun BudgetScreen(
         )
     }
 
+    // Confirmation dialog if category is already covered
+    if (coveredCategoryToAddAnyway != null) {
+        val cat = coveredCategoryToAddAnyway!!
+        val coverage = categoryCoverageMap[cat.id]
+        val endMonthFormatted = if (coverage != null) {
+            AppConstants.formatMonthYear(coverage.endMonthYear, strings.isFrench)
+        } else ""
+
+        AlertDialog(
+            onDismissRequest = { coveredCategoryToAddAnyway = null },
+            title = {
+                Text(
+                    text = strings.coveredAddAnywayTitle(cat.name, endMonthFormatted),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val targetCat = cat
+                        coveredCategoryToAddAnyway = null
+                        categoryForAddExpense = targetCat
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EmeraldPrimary,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.testTag("confirm_add_anyway_button")
+                ) {
+                    Text(strings.addAnyway, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { coveredCategoryToAddAnyway = null },
+                    modifier = Modifier.testTag("cancel_add_anyway_button")
+                ) {
+                    Text(strings.cancel, color = TextPrimary)
+                }
+            },
+            containerColor = EmeraldSurfaceElevated,
+            shape = RoundedCornerShape(18.dp)
+        )
+    }
+
     // Add category expense matching Screenshot 2 exactly (MAD amount + Note optional + Helper text)
     if (categoryForAddExpense != null) {
         val cat = categoryForAddExpense!!
@@ -330,8 +387,8 @@ fun BudgetScreen(
             categoryName = cat.name,
             currency = household.currency,
             onDismiss = { categoryForAddExpense = null },
-            onSave = { amount, note ->
-                viewModel.addCategoryExpense(cat, amount, note)
+            onSave = { amount, note, coversMonths ->
+                viewModel.addCategoryExpense(cat, amount, note, coversMonths)
                 categoryForAddExpense = null
             }
         )
@@ -340,10 +397,12 @@ fun BudgetScreen(
     if (categoryForHistory != null) {
         val cat = categoryForHistory!!
         val catExpenses = currentMonthExpenses.filter { it.categoryId == cat.id }
+        val coverage = categoryCoverageMap[cat.id]
         CategoryHistoryDialog(
             category = cat,
             expenses = catExpenses,
             currency = household.currency,
+            coverage = coverage,
             onDismiss = { categoryForHistory = null },
             onEditExpense = { expenseToEdit = it },
             onDeleteExpense = { expenseToDelete = it }
@@ -357,8 +416,8 @@ fun BudgetScreen(
             expense = exp,
             currency = household.currency,
             onDismiss = { expenseToEdit = null },
-            onSave = { newTitle, newAmount, newNote ->
-                viewModel.updateShoppingExpense(exp, newTitle, newAmount, newNote)
+            onSave = { newTitle, newAmount, newNote, newCoversMonths ->
+                viewModel.updateShoppingExpense(exp, newTitle, newAmount, newNote, newCoversMonths)
                 expenseToEdit = null
             }
         )

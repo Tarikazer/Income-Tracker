@@ -6,22 +6,24 @@
 - **Package**: `com.aistudio.incomecontrol.tkrzq`
 
 ### Features & Updates in v1.10:
-1. **Part A: Prepaid / Advance Multi-Month Payment Coverage**:
-   - Added `coversMonths: Int = 1` to `ExpenseEntity` with database schema migration `MIGRATION_4_5` (`ALTER TABLE expenses ADD COLUMN coversMonths INTEGER NOT NULL DEFAULT 1`).
-   - Advance payment covers future months without double-counting amounts in totals, statistics, summaries, or monthly budgets.
-   - Selectable duration chips (1, 2, 3, 6, 12 months) with dynamic date range preview in `AddCategoryExpenseDialog` and `EditShoppingExpenseDialog` (within 24h window).
-   - "Already paid · covered until [Month]" green check badge on covered `CategoryCard` with confirmation dialog when adding an expense in a covered month.
-   - Paying expense row displays coverage duration chip (e.g. "3 months" / "3 mois").
-   - `CategoryHistoryDialog` displays read-only coverage attribution note when covered and no expenses exist.
-   - Backup export & import supports `coversMonths` round trip persistence with backwards compatibility (`optInt("coversMonths", 1)`).
-2. **Part B: Edit Transaction Dialog Layout & Usability Polish**:
-   - Replaced cramped two-column Date & Time input row with a unified, full-width, singleLine read-only field displaying formatted date and time (`Oct 7, 2026 · 09:23`), with calendar and lock icons.
-   - Enabled `verticalScroll` on dialog content for small screens and accessibility font scales (360dp width and 1.3+ font scale).
-   - Replaced hardcoded dark styling with theme-aware `EmeraldSurfaceElevated`, `EmeraldCardBorder`, and `TextSecondary`.
-3. **Part C: Light Theme High-Contrast Polish**:
+1. **AppConstants Month Math & Calendar Safety**:
+   - Fixed `AppConstants.addMonths` and `FinanceViewModel.dailySpendingTrend` by initializing `Calendar.DAY_OF_MONTH = 1` prior to setting year and month, avoiding 29–31 day-of-month calendar overflows when calculating short months.
+   - Added unit tests for month arithmetic across year boundaries (`2026-11 + 2 = 2027-01`, `2026-12 + 1 = 2027-01`, `2027-02 + 1 = 2027-03`) and with day 31 calendar state.
+2. **Prepaid / Advance Multi-Month Payment Coverage (Part A)**:
+   - Added `coversMonths: Int = 1` to `ExpenseEntity` with database schema migration `MIGRATION_4_5` (`ALTER TABLE expenses ADD COLUMN coversMonths INTEGER NOT NULL DEFAULT 1`) and Room version bump to 5.
+   - `AddCategoryExpenseDialog`: added "Covers" row with selectable chips (1, 2, 3, 6, 12 months) and dynamic date range helper (`Covers Oct 2026 → Dec 2026`), passing `coversMonths` to repository.
+   - `EditShoppingExpenseDialog`: displays "Covers" selectable chips when `categoryId != 0` within 24h edit window, preselected with the expense's `coversMonths` value.
+   - Wired `categoryCoverageMap` in `BudgetScreen`: passes coverage to `CategoryCard` to display "Already paid · covered until [Month]" check badge with 0.00 spent.
+   - Add Anyway Confirmation: tapping "+ Add expense" on a covered category displays an `AlertDialog` confirmation (`[Category] is already paid until [Month]. Add another expense anyway?`) before opening the entry dialog.
+   - `ExpenseItemRow`: displays a coverage duration chip (e.g. `3 months` / `3 mois`) next to the title on advance-payment expenses.
+   - `CategoryHistoryDialog`: displays a read-only info card (`Covered by [Amount] [Currency] paid in [Month]`) when viewing a covered category with no expenses in the selected month.
+   - Backup: `exportBackupJson` persists `coversMonths` and `importBackupJson` parses `optInt("coversMonths", 1)` for backwards compatibility.
+3. **Edit Transaction Dialog Layout Bug Fix (Part B)**:
+   - Replaced cramped two-column Date and Time row in `EditShoppingExpenseDialog` with a unified, full-width, single-line read-only field labeled "Date & Time" displaying formatted timestamp (`Oct 7, 2026 · 09:23`) with calendar and lock icons.
+   - Dialog content made vertically scrollable (`verticalScroll`) for 360dp width and large font scales.
+4. **Light Theme Contrast & Theming Polish (Part C)**:
    - Added `accent: Color` theme token to `AppColors` (`LightAppColors.accent = Color(0xFF176FA3)`, `DarkAppColors.accent = Color(0xFFD3E8F8)`), exposed as `AccentOnSurface`.
-   - Eliminated light-on-light illegibility in Light theme across `ExpenseItemRow`, `CategoryCard`, `StatisticsScreen`, `Charts`, `HomeScreen`, `BudgetScreen`, and `Dialogs`.
-   - Maintained all dark theme aesthetics and gradient cards intact.
+   - Fixed light-on-light text and icon colors across `ExpenseItemRow`, `CategoryCard`, `StatisticsScreen`, `Charts`, `HomeScreen`, `BudgetScreen`, and `Dialogs`.
 
 ---
 

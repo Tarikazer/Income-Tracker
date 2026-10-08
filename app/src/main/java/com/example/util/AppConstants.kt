@@ -36,6 +36,7 @@ object AppConstants {
 
     /**
      * Add [months] to a "yyyy-MM" string.
+     * Sets day-of-month to 1 first to prevent overflow when today's day-of-month is 29-31.
      */
     fun addMonths(monthYear: String, months: Int): String {
         return try {
@@ -44,6 +45,7 @@ object AppConstants {
             val month = parts[1].toInt() // 1-based
             val cal = java.util.Calendar.getInstance()
             cal.set(java.util.Calendar.YEAR, year)
+            cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
             cal.set(java.util.Calendar.MONTH, month - 1)
             cal.add(java.util.Calendar.MONTH, months)
             java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.US).format(cal.time)

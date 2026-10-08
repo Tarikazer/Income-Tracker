@@ -245,6 +245,7 @@ class FinanceViewModel(
         val year = parts.getOrNull(0)?.toIntOrNull() ?: 2026
         val monthIndex = (parts.getOrNull(1)?.toIntOrNull() ?: 10) - 1
         cal.set(Calendar.YEAR, year)
+        cal.set(Calendar.DAY_OF_MONTH, 1)
         cal.set(Calendar.MONTH, monthIndex)
         val maxDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
 
