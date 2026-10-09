@@ -19,7 +19,9 @@ data class CategoryEntity(
     val isRecurring: Boolean = true,
     val colorHex: Long = 0xFF10B981,
     val householdId: Long = 1,
-    val displayOrder: Int = 0
+    val displayOrder: Int = 0,
+    val activeFromMonth: String = "0000-01",
+    val activeUntilMonth: String? = null
 )
 
 @Entity(tableName = "incomes")
@@ -30,7 +32,8 @@ data class IncomeEntity(
     val monthYear: String, // e.g. "2026-10"
     val isRecurring: Boolean = true,
     val dateTimestamp: Long = System.currentTimeMillis(),
-    val householdId: Long = 1
+    val householdId: Long = 1,
+    val note: String = ""
 )
 
 @Entity(tableName = "expenses")

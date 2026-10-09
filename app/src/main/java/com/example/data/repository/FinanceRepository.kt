@@ -31,6 +31,10 @@ class FinanceRepository(
         householdDao.updateHousehold(HouseholdEntity(id = id, name = name, currency = currency))
     }
 
+    fun getActiveCategoriesForMonth(monthYear: String): Flow<List<CategoryEntity>> {
+        return categoryDao.getActiveCategoriesForMonth(monthYear)
+    }
+
     suspend fun addCategory(category: CategoryEntity): Long {
         return categoryDao.insertCategory(category)
     }
@@ -44,8 +48,34 @@ class FinanceRepository(
         categoryDao.deleteCategory(category)
     }
 
+    suspend fun deleteCategoryFromMonth(category: CategoryEntity, monthYear: String) {
+        if (database != null) {
+            database.withTransaction {
+                performDeleteCategoryFromMonth(category, monthYear)
+            }
+        } else {
+            performDeleteCategoryFromMonth(category, monthYear)
+        }
+    }
+
+    private suspend fun performDeleteCategoryFromMonth(category: CategoryEntity, monthYear: String) {
+        if (monthYear > category.activeFromMonth) {
+            val prevMonth = com.example.util.AppConstants.addMonths(monthYear, -1)
+            categoryDao.updateCategoryActiveUntilMonth(category.id, prevMonth)
+            expenseDao.deleteExpensesForCategoryFromMonth(category.id, monthYear)
+        } else {
+            // monthYear == category.activeFromMonth (or before)
+            categoryDao.deleteCategory(category)
+            expenseDao.deleteExpensesForCategoryFromMonth(category.id, monthYear)
+        }
+    }
+
     suspend fun getExpenseCountForCategory(categoryId: Long): Int {
         return expenseDao.getExpenseCountForCategory(categoryId)
+    }
+
+    suspend fun getExpenseCountForCategoryFromMonth(categoryId: Long, fromMonth: String): Int {
+        return expenseDao.getExpenseCountForCategoryFromMonth(categoryId, fromMonth)
     }
 
     fun getIncomesForMonth(monthYear: String): Flow<List<IncomeEntity>> {
@@ -118,7 +148,7 @@ class FinanceRepository(
 
     fun getCategorySpendingForMonth(monthYear: String): Flow<List<CategoryWithSpent>> {
         return combine(
-            categoryDao.getAllCategories(),
+            categoryDao.getActiveCategoriesForMonth(monthYear),
             expenseDao.getExpensesForMonth(monthYear)
         ) { categories, expenses ->
             val expensesByCategory = expenses.groupBy { it.categoryId }
@@ -336,6 +366,12 @@ class FinanceRepository(
             obj.put("isRecurring", c.isRecurring)
             obj.put("householdId", c.householdId)
             obj.put("displayOrder", c.displayOrder)
+            obj.put("activeFromMonth", c.activeFromMonth)
+            if (c.activeUntilMonth != null) {
+                obj.put("activeUntilMonth", c.activeUntilMonth)
+            } else {
+                obj.put("activeUntilMonth", JSONObject.NULL)
+            }
             categoriesArray.put(obj)
         }
         root.put("categories", categoriesArray)
@@ -350,6 +386,7 @@ class FinanceRepository(
             obj.put("isRecurring", inc.isRecurring)
             obj.put("dateTimestamp", inc.dateTimestamp)
             obj.put("householdId", inc.householdId)
+            obj.put("note", inc.note)
             incomesArray.put(obj)
         }
         root.put("incomes", incomesArray)
@@ -404,6 +441,10 @@ class FinanceRepository(
                 val array = root.getJSONArray("categories")
                 for (i in 0 until array.length()) {
                     val obj = array.getJSONObject(i)
+                    val activeUntilRaw = if (obj.has("activeUntilMonth") && !obj.isNull("activeUntilMonth")) {
+                        obj.optString("activeUntilMonth", "").takeIf { it.isNotBlank() }
+                    } else null
+
                     categoriesList.add(
                         CategoryEntity(
                             id = obj.optLong("id", 0L),
@@ -412,7 +453,9 @@ class FinanceRepository(
                             colorHex = obj.optLong("colorHex", 0xFF10B981),
                             isRecurring = obj.optBoolean("isRecurring", false),
                             householdId = obj.optLong("householdId", 1L),
-                            displayOrder = obj.optInt("displayOrder", i)
+                            displayOrder = obj.optInt("displayOrder", i),
+                            activeFromMonth = obj.optString("activeFromMonth", "0000-01"),
+                            activeUntilMonth = activeUntilRaw
                         )
                     )
                 }
@@ -431,7 +474,8 @@ class FinanceRepository(
                             monthYear = obj.optString("monthYear", "2026-10"),
                             isRecurring = obj.optBoolean("isRecurring", true),
                             dateTimestamp = obj.optLong("dateTimestamp", System.currentTimeMillis()),
-                            householdId = obj.optLong("householdId", 1L)
+                            householdId = obj.optLong("householdId", 1L),
+                            note = obj.optString("note", "")
                         )
                     )
                 }

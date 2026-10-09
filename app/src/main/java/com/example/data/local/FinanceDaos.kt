@@ -56,6 +56,15 @@ interface CategoryDao {
 
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun getCategoryCount(): Int
+
+    @Query("SELECT * FROM categories WHERE activeFromMonth <= :monthYear AND (activeUntilMonth IS NULL OR :monthYear <= activeUntilMonth) ORDER BY displayOrder ASC, id ASC")
+    fun getActiveCategoriesForMonth(monthYear: String): Flow<List<CategoryEntity>>
+
+    @Query("SELECT * FROM categories WHERE activeFromMonth <= :monthYear AND (activeUntilMonth IS NULL OR :monthYear <= activeUntilMonth) ORDER BY displayOrder ASC, id ASC")
+    suspend fun getActiveCategoriesForMonthList(monthYear: String): List<CategoryEntity>
+
+    @Query("UPDATE categories SET activeUntilMonth = :untilMonth WHERE id = :categoryId")
+    suspend fun updateCategoryActiveUntilMonth(categoryId: Long, untilMonth: String)
 }
 
 @Dao
@@ -125,6 +134,12 @@ interface ExpenseDao {
 
     @Query("SELECT COUNT(*) FROM expenses WHERE categoryId = :categoryId")
     suspend fun getExpenseCountForCategory(categoryId: Long): Int
+
+    @Query("SELECT COUNT(*) FROM expenses WHERE categoryId = :categoryId AND monthYear >= :fromMonth")
+    suspend fun getExpenseCountForCategoryFromMonth(categoryId: Long, fromMonth: String): Int
+
+    @Query("DELETE FROM expenses WHERE categoryId = :categoryId AND monthYear >= :fromMonth")
+    suspend fun deleteExpensesForCategoryFromMonth(categoryId: Long, fromMonth: String)
 
     @Query("UPDATE expenses SET categoryId = 0, categoryName = 'Separate Purchase', categoryIconKey = 'shopping' WHERE isRecurring = 0 AND (categoryName = 'Alimentation' OR categoryId = 3)")
     suspend fun detachShoppingFromAlimentation()

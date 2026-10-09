@@ -20,6 +20,15 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE categories ADD COLUMN activeFromMonth TEXT NOT NULL DEFAULT '0000-01'")
+        db.execSQL("ALTER TABLE categories ADD COLUMN activeUntilMonth TEXT")
+        db.execSQL("ALTER TABLE incomes ADD COLUMN note TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 val ALL_MIGRATIONS: Array<Migration> = arrayOf(
-    MIGRATION_4_5
+    MIGRATION_4_5,
+    MIGRATION_5_6
 )

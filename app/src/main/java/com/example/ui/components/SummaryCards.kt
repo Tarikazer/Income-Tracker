@@ -104,10 +104,12 @@ fun SwipeableHomeSpendingCard(
                     val absDiff = abs(diff)
                     val formattedDiff = formatCurrency(absDiff, currency)
 
-                    // If last month's total spending was 0, hide or do not display the text that shows the difference compared to last month
+                    // If last month or last week's spending was 0, do not compare / hide the difference text
                     val isLastMonthComparison = page.periodLabel.contains("last month", ignoreCase = true) ||
                             page.title.contains("month", ignoreCase = true)
-                    val hideComparison = isLastMonthComparison && page.previousAmount <= 0.0001
+                    val isLastWeekComparison = page.periodLabel.contains("last week", ignoreCase = true) ||
+                            page.title.contains("week", ignoreCase = true)
+                    val hideComparison = (isLastMonthComparison || isLastWeekComparison) && page.previousAmount <= 0.0001
 
                     if (!hideComparison) {
                         Row(

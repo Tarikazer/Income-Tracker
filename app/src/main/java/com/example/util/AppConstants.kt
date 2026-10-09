@@ -67,4 +67,11 @@ object AppConstants {
             monthYear
         }
     }
+
+    /**
+     * Pure rule: hide period comparisons if previous period spending was 0 or less.
+     */
+    fun shouldShowComparison(previousAmount: Double): Boolean {
+        return previousAmount > 0.0001
+    }
 }

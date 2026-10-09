@@ -149,6 +149,32 @@ class AppStrings(val language: AppLanguage) {
             "Delete $categoryName and its $count purchases? This cannot be undone."
         }
     }
+    fun deleteCategoryFromMonthConfirmation(categoryName: String, monthFormatted: String, count: Int): String {
+        return if (isFrench) {
+            "Supprimer $categoryName à partir de $monthFormatted ? Les mois précédents la conservent. $count achats à partir de $monthFormatted seront supprimés. Cette action est irréversible."
+        } else {
+            "Delete $categoryName from $monthFormatted onward? Previous months keep it. $count purchases from $monthFormatted onward will be deleted. This cannot be undone."
+        }
+    }
+
+    val repeatEveryMonth = if (isFrench) "Répéter chaque mois" else "Repeat every month"
+    val notActiveInCurrentMonth = if (isFrench) "Non actif ce mois-ci" else "Not active in the current month"
+    val deleteIncomeTitle = if (isFrench) "Supprimer le revenu ?" else "Delete Income?"
+    fun deleteIncomeConfirmation(source: String, amountStr: String, currency: String): String {
+        return if (isFrench) {
+            "Supprimer '$source' ($amountStr $currency) ? Cette action est irréversible."
+        } else {
+            "Delete '$source' ($amountStr $currency)? This cannot be undone."
+        }
+    }
+    val deleteExpenseTitle = if (isFrench) "Supprimer la dépense ?" else "Delete Expense?"
+    fun deleteExpenseConfirmation(title: String, amountStr: String, currency: String): String {
+        return if (isFrench) {
+            "Supprimer '$title' ($amountStr $currency) ? Cette action est irréversible."
+        } else {
+            "Delete '$title' ($amountStr $currency)? This cannot be undone."
+        }
+    }
 
     // Statistics
     val statsTitle = if (isFrench) "Statistiques & Tendances" else "Reports & Trends"
