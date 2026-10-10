@@ -52,6 +52,7 @@ fun BudgetScreen(
     var showHouseholdDialog by remember { mutableStateOf(false) }
 
     var categoryForHistory by remember { mutableStateOf<CategoryEntity?>(null) }
+    var incomeToDelete by remember { mutableStateOf<IncomeEntity?>(null) }
     var categoryToDelete by remember { mutableStateOf<CategoryEntity?>(null) }
     var categoryToReorder by remember { mutableStateOf<CategoryEntity?>(null) }
     var expenseToEdit by remember { mutableStateOf<ExpenseEntity?>(null) }
@@ -241,7 +242,7 @@ fun BudgetScreen(
                         IncomeRow(
                             income = income.copy(source = displaySource),
                             currency = household.currency,
-                            onDelete = { viewModel.deleteIncome(income) }
+                            onDelete = { incomeToDelete = income }
                         )
                     }
                 }
@@ -319,14 +320,14 @@ fun BudgetScreen(
     }
 
     // Dialogs:
-    // Add income matching Screenshot 1 exactly (just MAD amount)
+    // Add income matching Screenshot 1 exactly (just MAD amount + note for Other Incomes)
     if (showAddIncomeDialog) {
         AddIncomeDialog(
             currency = household.currency,
             existingIncomesCount = incomes.size,
             onDismiss = { showAddIncomeDialog = false },
-            onSave = { amount ->
-                viewModel.addIncome(amount)
+            onSave = { amount, note ->
+                viewModel.addIncome(amount = amount, note = note)
                 showAddIncomeDialog = false
             }
         )
@@ -426,42 +427,34 @@ fun BudgetScreen(
     // Delete Expense Confirmation Dialog
     if (expenseToDelete != null) {
         val exp = expenseToDelete!!
-        AlertDialog(
-            onDismissRequest = { expenseToDelete = null },
-            title = {
-                Text(
-                    text = "Delete Expense?",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                )
+        val amountStr = String.format(Locale.US, "%,.2f", exp.amount)
+        ConfirmDeleteDialog(
+            title = strings.deleteExpenseTitle,
+            message = strings.deleteExpenseConfirmation(exp.title, amountStr, household.currency),
+            confirmText = strings.delete,
+            cancelText = strings.cancel,
+            onConfirm = {
+                viewModel.deleteExpense(exp)
+                expenseToDelete = null
             },
-            text = {
-                Text(
-                    text = "Delete '${exp.title}' (${String.format(Locale.US, "%,.2f", exp.amount)} ${household.currency})?",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                )
+            onDismiss = { expenseToDelete = null }
+        )
+    }
+
+    // Delete Income Confirmation Dialog
+    if (incomeToDelete != null) {
+        val inc = incomeToDelete!!
+        val amountStr = String.format(Locale.US, "%,.2f", inc.amount)
+        ConfirmDeleteDialog(
+            title = strings.deleteIncomeTitle,
+            message = strings.deleteIncomeConfirmation(inc.source, amountStr, household.currency),
+            confirmText = strings.delete,
+            cancelText = strings.cancel,
+            onConfirm = {
+                viewModel.deleteIncome(inc)
+                incomeToDelete = null
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteExpense(exp)
-                        expenseToDelete = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { expenseToDelete = null }) {
-                    Text("Cancel", color = TextSecondary)
-                }
-            },
-            containerColor = EmeraldSurface,
-            shape = RoundedCornerShape(20.dp)
+            onDismiss = { incomeToDelete = null }
         )
     }
 
@@ -479,47 +472,22 @@ fun BudgetScreen(
 
     if (categoryToDelete != null) {
         val cat = categoryToDelete!!
-        var expenseCount by remember(cat.id) { mutableStateOf<Int?>(null) }
-        LaunchedEffect(cat.id) {
-            expenseCount = viewModel.getExpenseCountForCategory(cat.id)
+        var expenseCount by remember(cat.id, monthYear) { mutableStateOf<Int?>(null) }
+        LaunchedEffect(cat.id, monthYear) {
+            expenseCount = viewModel.getExpenseCountForCategoryFromMonth(cat.id, monthYear)
         }
 
-        AlertDialog(
-            onDismissRequest = { categoryToDelete = null },
-            title = {
-                Text(
-                    text = strings.deleteCategoryTitle,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                )
+        val monthFormatted = AppConstants.formatMonthYear(monthYear, strings.isFrench)
+        ConfirmDeleteDialog(
+            title = strings.deleteCategoryTitle,
+            message = strings.deleteCategoryFromMonthConfirmation(cat.name, monthFormatted, expenseCount ?: 0),
+            confirmText = strings.delete,
+            cancelText = strings.cancel,
+            onConfirm = {
+                viewModel.deleteCategoryFromSelectedMonth(cat)
+                categoryToDelete = null
             },
-            text = {
-                Text(
-                    text = strings.deleteCategoryConfirmation(cat.name, expenseCount ?: 0),
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteCategory(cat)
-                        categoryToDelete = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(strings.delete, color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { categoryToDelete = null }) {
-                    Text(strings.cancel, color = TextSecondary)
-                }
-            },
-            containerColor = EmeraldSurface,
-            shape = RoundedCornerShape(20.dp)
+            onDismiss = { categoryToDelete = null }
         )
     }
 
@@ -594,6 +562,15 @@ private fun IncomeRow(
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = EmeraldCyan,
                                 fontSize = 11.sp
+                            )
+                        )
+                    }
+                    if (income.note.isNotBlank()) {
+                        Text(
+                            text = income.note,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextSecondary,
+                                fontSize = 11.5.sp
                             )
                         )
                     }

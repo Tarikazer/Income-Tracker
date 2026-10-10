@@ -110,16 +110,21 @@ class FinanceRepository(
      * If multiple expenses cover M, use the one with the latest end month.
      */
     fun getCoveredCategoriesForMonth(monthYear: String): Flow<Map<Long, CategoryCoverage>> {
-        return expenseDao.getAllExpenses().map { allExpenses ->
+        return combine(
+            expenseDao.getAllExpenses(),
+            categoryDao.getActiveCategoriesForMonth(monthYear)
+        ) { allExpenses, activeCategories ->
+            val activeCategoryIds = activeCategories.map { it.id }.toSet()
             val expensesInSelectedMonth = allExpenses.filter { it.monthYear == monthYear }
             val categoriesWithExpensesInMonth = expensesInSelectedMonth
                 .map { it.categoryId }
                 .filter { it != 0L }
                 .toSet()
 
-            // Candidates: expenses with coversMonths > 1 for real categories where monthYear is covered
+            // Candidates: expenses with coversMonths > 1 for real categories where monthYear is covered AND category is active in monthYear
             val candidateExpenses = allExpenses.filter { exp ->
                 exp.categoryId != 0L &&
+                activeCategoryIds.contains(exp.categoryId) &&
                 exp.coversMonths > 1 &&
                 monthYear > exp.monthYear &&
                 monthYear <= com.example.util.AppConstants.addMonths(exp.monthYear, exp.coversMonths - 1) &&
@@ -205,8 +210,12 @@ class FinanceRepository(
         expenseDao.deleteExpenseById(id)
     }
 
-    suspend fun moveCategoryUp(category: CategoryEntity) {
-        val list = categoryDao.getCategoriesList()
+    suspend fun moveCategoryUp(category: CategoryEntity, monthYear: String? = null) {
+        val list = if (monthYear != null) {
+            categoryDao.getActiveCategoriesForMonthList(monthYear)
+        } else {
+            categoryDao.getCategoriesList()
+        }
         val index = list.indexOfFirst { it.id == category.id }
         if (index > 0) {
             val prev = list[index - 1]
@@ -216,8 +225,12 @@ class FinanceRepository(
         }
     }
 
-    suspend fun moveCategoryDown(category: CategoryEntity) {
-        val list = categoryDao.getCategoriesList()
+    suspend fun moveCategoryDown(category: CategoryEntity, monthYear: String? = null) {
+        val list = if (monthYear != null) {
+            categoryDao.getActiveCategoriesForMonthList(monthYear)
+        } else {
+            categoryDao.getCategoriesList()
+        }
         val index = list.indexOfFirst { it.id == category.id }
         if (index in 0 until list.size - 1) {
             val next = list[index + 1]

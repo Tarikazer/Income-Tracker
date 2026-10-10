@@ -157,8 +157,8 @@ class ExampleUnitTest {
         assertEquals("Settings", enStrings.settingsTitle)
         assertEquals("Paramètres", frStrings.settingsTitle)
 
-        assertEquals("Version 1.10", enStrings.versionLabel)
-        assertEquals("Version 1.10", frStrings.versionLabel)
+        assertEquals("Version 1.11", enStrings.versionLabel)
+        assertEquals("Version 1.11", frStrings.versionLabel)
 
         assertEquals(
             "Delete Rent and its 3 purchases? This cannot be undone.",
@@ -168,6 +168,14 @@ class ExampleUnitTest {
             "Supprimer Loyer et ses 3 achats ? Cette action est irréversible.",
             frStrings.deleteCategoryConfirmation("Loyer", 3)
         )
+    }
+
+    @Test
+    fun testShouldShowComparison() {
+        assertFalse(AppConstants.shouldShowComparison(0.0))
+        assertFalse(AppConstants.shouldShowComparison(-1.0))
+        assertTrue(AppConstants.shouldShowComparison(0.5))
+        assertTrue(AppConstants.shouldShowComparison(100.0))
     }
 
     @Test

@@ -1,5 +1,39 @@
 # APK Version Release Log
 
+## Version 1.11 (Version Code: 12)
+- **File**: `IncomeControl-v1.11.apk` (and `app-latest.apk`)
+- **Date**: October 10, 2026
+- **Package**: `com.aistudio.incomecontrol.tkrzq`
+
+### Features & Updates in v1.11:
+1. **Per-Month Categories (Lifecycle & Scoping)**:
+   - Added `activeFromMonth: String` (defaults to `'0000-01'`) and `activeUntilMonth: String?` (nullable) to `CategoryEntity` with Room database migration `MIGRATION_5_6` and DB version 6.
+   - Creating a new category assigns `activeFromMonth = currentCalendarMonth` (e.g. today's "yyyy-MM") and switches the selected month to that current month, ensuring newly added categories never appear in past months.
+   - Deleting a category from a selected month sets `activeUntilMonth = previousMonth` (or completely removes the category if it was created in that month or later) via `repository.deleteCategoryFromMonth(category, selectedMonth)`.
+   - Expenses for this category in past months are strictly preserved; only expenses from the selected month onward are deleted.
+   - Past months preserve archived categories and their historical expenses. Category statistics, breakdown charts, category history dialogs, and search use `allCategories` so historical names, colors, and icons are never lost.
+   - Category reordering (`moveCategoryUp` / `moveCategoryDown`) correctly handles active categories for the selected month.
+   - Prepaid coverage (`getCoveredCategoriesForMonth`) ignores months where the category is not active.
+2. **Income Note Support**:
+   - Added `note: String = ""` to `IncomeEntity` with database migration `MIGRATION_5_6`.
+   - In `AddIncomeDialog`, added an optional Note field displayed specifically when adding secondary incomes (labeled "Other Incomes"). The primary "Monthly Income" field remains simple.
+   - `IncomeRow` in `BudgetScreen` displays the note beneath the income title when non-blank.
+   - Backup export and import preserves and restores `IncomeEntity.note`.
+3. **Universal Confirmation Before Every Deletion**:
+   - Created reusable composable `ConfirmDeleteDialog(title, message, confirmText, cancelText, onConfirm, onDismiss)` in `ui/components` with theme-aware colors, high-contrast red confirm button, cancel button, and localized strings (EN/FR).
+   - Applied `ConfirmDeleteDialog` across:
+     * Category deletion (explaining past months are preserved, displaying count of purchases deleted from this month onward).
+     * Expense deletion in both `HomeScreen` and `BudgetScreen` (including deletions triggered from `CategoryHistoryDialog`).
+     * Income deletion in `BudgetScreen` `IncomeRow`.
+     * Restoring a local backup in both `HomeScreen` and `SettingsScreen` (warning that current data will be replaced).
+4. **Clean Comparison Rule on Summary Cards**:
+   - In `SwipeableHomeSpendingCard`, replaced ad-hoc title/period label string matching with a unified check: hides the comparison line on all pages (Today, Week, Month) whenever `!AppConstants.shouldShowComparison(page.previousAmount)`.
+5. **Database Migration & Verification**:
+   - Room schema `6.json` exported and verified.
+   - Added automated JVM / Robolectric tests for `MIGRATION_5_6`, `deleteCategoryFromMonth`, future month scoping, `shouldShowComparison` edge cases (0.0, -1.0, 0.5), and backup import/export round-trip.
+
+---
+
 ## Version 1.10 (Version Code: 11)
 - **File**: `IncomeControl-v1.10.apk` (and `app-latest.apk`)
 - **Date**: October 8, 2026

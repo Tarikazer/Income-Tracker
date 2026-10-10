@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.SwipeableSpendingSummary
 import com.example.ui.theme.*
 import com.example.ui.util.LocalAppStrings
+import com.example.util.AppConstants
 import java.util.Locale
 import kotlin.math.abs
 
@@ -104,14 +105,10 @@ fun SwipeableHomeSpendingCard(
                     val absDiff = abs(diff)
                     val formattedDiff = formatCurrency(absDiff, currency)
 
-                    // If last month or last week's spending was 0, do not compare / hide the difference text
-                    val isLastMonthComparison = page.periodLabel.contains("last month", ignoreCase = true) ||
-                            page.title.contains("month", ignoreCase = true)
-                    val isLastWeekComparison = page.periodLabel.contains("last week", ignoreCase = true) ||
-                            page.title.contains("week", ignoreCase = true)
-                    val hideComparison = (isLastMonthComparison || isLastWeekComparison) && page.previousAmount <= 0.0001
+                    // Single rule: hide comparison on EVERY page when previous period spending was 0 or less
+                    val showComparison = AppConstants.shouldShowComparison(page.previousAmount)
 
-                    if (!hideComparison) {
+                    if (showComparison) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)

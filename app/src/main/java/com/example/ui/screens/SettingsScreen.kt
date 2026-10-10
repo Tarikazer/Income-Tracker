@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.BackupRestoreDialog
+import com.example.ui.components.ConfirmDeleteDialog
 import com.example.ui.components.HouseholdDialog
 import com.example.ui.components.IncomeControlWalletIcon
 import com.example.ui.theme.*
@@ -58,6 +59,7 @@ fun SettingsScreen(
 
     var showHouseholdDialog by remember { mutableStateOf(false) }
     var showBackupRestoreDialog by remember { mutableStateOf(false) }
+    var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
 
     // SAF launchers for Backup & Restore
     val exportLauncher = rememberLauncherForActivityResult(
@@ -72,7 +74,7 @@ fun SettingsScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            viewModel.importDataFromUri(context, uri)
+            pendingRestoreUri = uri
         }
     }
 
@@ -612,6 +614,21 @@ fun SettingsScreen(
             },
             statusMessage = backupRestoreMessage,
             onClearStatus = { viewModel.clearBackupRestoreMessage() }
+        )
+    }
+
+    if (pendingRestoreUri != null) {
+        ConfirmDeleteDialog(
+            title = strings.restoreBackupTitle,
+            message = strings.restoreBackupConfirmation,
+            confirmText = strings.restore,
+            cancelText = strings.cancel,
+            onConfirm = {
+                val uri = pendingRestoreUri!!
+                pendingRestoreUri = null
+                viewModel.importDataFromUri(context, uri)
+            },
+            onDismiss = { pendingRestoreUri = null }
         )
     }
 }

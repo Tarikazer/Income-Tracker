@@ -97,7 +97,7 @@ class AppStrings(val language: AppLanguage) {
     val restoreBackup = if (isFrench) "Restaurer une sauvegarde locale" else "Restore Local Backup"
     val backupDescription = if (isFrench) "Sauvegardez vos données hors-ligne sur votre appareil (Storage Access Framework)." else "Safely backup all your data offline to your device."
     val appInfoSection = if (isFrench) "À propos" else "About"
-    val versionLabel = "Version 1.10"
+    val versionLabel = "Version 1.11"
     val offlineSecure = if (isFrench) "100% Hors-ligne & Sécurisé (SQLite Local)" else "100% Offline & Private (Local SQLite)"
     val createdBy = if (isFrench) "Créé par Frost Dev" else "Created by Frost Dev"
     val developerLabel = if (isFrench) "Développeur" else "Developer"
@@ -175,6 +175,14 @@ class AppStrings(val language: AppLanguage) {
             "Delete '$title' ($amountStr $currency)? This cannot be undone."
         }
     }
+
+    val restoreBackupTitle = if (isFrench) "Restaurer la sauvegarde ?" else "Restore Backup?"
+    val restoreBackupConfirmation = if (isFrench) {
+        "Restaurer cette sauvegarde remplacera toutes vos données actuelles. Cette action est irréversible."
+    } else {
+        "Restoring this backup will replace all current data. This cannot be undone."
+    }
+    val restore = if (isFrench) "Restaurer" else "Restore"
 
     // Statistics
     val statsTitle = if (isFrench) "Statistiques & Tendances" else "Reports & Trends"

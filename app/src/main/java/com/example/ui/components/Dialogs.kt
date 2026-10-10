@@ -55,9 +55,10 @@ fun AddIncomeDialog(
     currency: String,
     existingIncomesCount: Int = 0,
     onDismiss: () -> Unit,
-    onSave: (amount: Double) -> Unit
+    onSave: (amount: Double, note: String) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
+    var noteText by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val isFirstIncome = existingIncomesCount == 0
     val incomeCategoryLabel = if (isFirstIncome) "Monthly Income" else "Other Incomes"
@@ -162,6 +163,29 @@ fun AddIncomeDialog(
                         .testTag("income_amount_input")
                 )
 
+                if (!isFirstIncome) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = noteText,
+                        onValueChange = { noteText = it },
+                        label = { Text("Note (optional)") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = MintButtonColor,
+                            unfocusedBorderColor = Color(0xFF354B42),
+                            focusedLabelColor = MintButtonColor,
+                            unfocusedLabelColor = TextSecondary,
+                            cursorColor = MintButtonColor
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("income_note_input")
+                    )
+                }
+
                 if (errorMessage != null) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
@@ -201,7 +225,7 @@ fun AddIncomeDialog(
                                 errorMessage = "Please enter a valid amount."
                                 return@Button
                             }
-                            onSave(amount)
+                            onSave(amount, noteText.trim())
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MintButtonColor,

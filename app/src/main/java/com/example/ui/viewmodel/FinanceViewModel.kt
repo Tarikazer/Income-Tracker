@@ -165,6 +165,14 @@ class FinanceViewModel(
             initialValue = emptyList()
         )
 
+    val currentCalendarMonthIncomes: StateFlow<List<IncomeEntity>> = repository
+        .getIncomesForMonth(getCurrentMonthYear())
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val categoryProgressList: StateFlow<List<CategoryWithSpent>> = _selectedMonthYear
         .flatMapLatest { month -> repository.getCategorySpendingForMonth(month) }
@@ -448,7 +456,7 @@ class FinanceViewModel(
         }
     }
 
-    fun addIncome(amount: Double, source: String? = null, isRecurring: Boolean = true) {
+    fun addIncome(amount: Double, source: String? = null, isRecurring: Boolean = true, note: String = "") {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
@@ -469,7 +477,8 @@ class FinanceViewModel(
                     amount = amount,
                     monthYear = incomeMonthYear,
                     isRecurring = isRecurring,
-                    dateTimestamp = now
+                    dateTimestamp = now,
+                    note = note.trim()
                 )
             )
             if (_selectedMonthYear.value != incomeMonthYear) {
@@ -478,7 +487,7 @@ class FinanceViewModel(
         }
     }
 
-    fun addIncomeWithSource(source: String, amount: Double, isRecurring: Boolean = true) {
+    fun addIncomeWithSource(source: String, amount: Double, isRecurring: Boolean = true, note: String = "") {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val incomeMonthYear = SimpleDateFormat("yyyy-MM", Locale.US).format(Date(now))
@@ -499,7 +508,8 @@ class FinanceViewModel(
                     amount = amount,
                     monthYear = incomeMonthYear,
                     isRecurring = isRecurring,
-                    dateTimestamp = now
+                    dateTimestamp = now,
+                    note = note.trim()
                 )
             )
             if (_selectedMonthYear.value != incomeMonthYear) {
@@ -510,6 +520,10 @@ class FinanceViewModel(
 
     suspend fun getExpenseCountForCategory(categoryId: Long): Int {
         return repository.getExpenseCountForCategory(categoryId)
+    }
+
+    suspend fun getExpenseCountForCategoryFromMonth(categoryId: Long, fromMonth: String): Int {
+        return repository.getExpenseCountForCategoryFromMonth(categoryId, fromMonth)
     }
 
     // Local Backup & Restore using Android Storage Access Framework
@@ -562,15 +576,22 @@ class FinanceViewModel(
         }
     }
 
+    fun deleteCategoryFromSelectedMonth(category: CategoryEntity) {
+        viewModelScope.launch {
+            val month = _selectedMonthYear.value
+            repository.deleteCategoryFromMonth(category, month)
+        }
+    }
+
     fun moveCategoryUp(category: CategoryEntity) {
         viewModelScope.launch {
-            repository.moveCategoryUp(category)
+            repository.moveCategoryUp(category, _selectedMonthYear.value)
         }
     }
 
     fun moveCategoryDown(category: CategoryEntity) {
         viewModelScope.launch {
-            repository.moveCategoryDown(category)
+            repository.moveCategoryDown(category, _selectedMonthYear.value)
         }
     }
 
@@ -602,13 +623,19 @@ class FinanceViewModel(
 
     fun addNewCategory(name: String, iconKey: String, isRecurring: Boolean = true) {
         viewModelScope.launch {
+            val currentCalendarMonth = SimpleDateFormat("yyyy-MM", Locale.US).format(Date())
             repository.addCategory(
                 CategoryEntity(
                     name = name.trim(),
                     iconKey = iconKey,
-                    isRecurring = isRecurring
+                    isRecurring = isRecurring,
+                    activeFromMonth = currentCalendarMonth,
+                    activeUntilMonth = null
                 )
             )
+            if (_selectedMonthYear.value != currentCalendarMonth) {
+                _selectedMonthYear.value = currentCalendarMonth
+            }
         }
     }
 

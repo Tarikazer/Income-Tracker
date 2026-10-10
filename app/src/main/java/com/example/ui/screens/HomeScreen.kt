@@ -62,6 +62,7 @@ fun HomeScreen(
     var showBackupRestoreDialog by remember { mutableStateOf(false) }
     var expenseToDelete by remember { mutableStateOf<ExpenseEntity?>(null) }
     var expenseToEdit by remember { mutableStateOf<ExpenseEntity?>(null) }
+    var pendingRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
     // Android Storage Access Framework (SAF) Launchers for local backup & restore
     val exportLauncher = rememberLauncherForActivityResult(
@@ -76,7 +77,7 @@ fun HomeScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            viewModel.importDataFromUri(context, uri)
+            pendingRestoreUri = uri
         }
     }
 
@@ -452,42 +453,17 @@ fun HomeScreen(
     // Delete Expense Confirmation Dialog
     if (expenseToDelete != null) {
         val exp = expenseToDelete!!
-        AlertDialog(
-            onDismissRequest = { expenseToDelete = null },
-            title = {
-                Text(
-                    text = "Delete Expense?",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                )
+        val amountStr = String.format(Locale.US, "%,.2f", exp.amount)
+        ConfirmDeleteDialog(
+            title = strings.deleteExpenseTitle,
+            message = strings.deleteExpenseConfirmation(exp.title, amountStr, household.currency),
+            confirmText = strings.delete,
+            cancelText = strings.cancel,
+            onConfirm = {
+                viewModel.deleteExpense(exp)
+                expenseToDelete = null
             },
-            text = {
-                Text(
-                    text = "Delete '${exp.title}' (${String.format(Locale.US, "%,.2f", exp.amount)} ${household.currency})?",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteExpense(exp)
-                        expenseToDelete = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { expenseToDelete = null }) {
-                    Text("Cancel", color = TextSecondary)
-                }
-            },
-            containerColor = EmeraldSurface,
-            shape = RoundedCornerShape(20.dp)
+            onDismiss = { expenseToDelete = null }
         )
     }
 
@@ -532,6 +508,21 @@ fun HomeScreen(
             },
             statusMessage = backupRestoreMessage,
             onClearStatus = { viewModel.clearBackupRestoreMessage() }
+        )
+    }
+
+    if (pendingRestoreUri != null) {
+        ConfirmDeleteDialog(
+            title = strings.restoreBackupTitle,
+            message = strings.restoreBackupConfirmation,
+            confirmText = strings.restore,
+            cancelText = strings.cancel,
+            onConfirm = {
+                val uri = pendingRestoreUri!!
+                pendingRestoreUri = null
+                viewModel.importDataFromUri(context, uri)
+            },
+            onDismiss = { pendingRestoreUri = null }
         )
     }
 }
