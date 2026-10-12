@@ -41,6 +41,7 @@ fun BudgetScreen(
     val monthYear by viewModel.selectedMonthYear.collectAsState()
     val summary by viewModel.monthlySummary.collectAsState()
     val incomes by viewModel.monthlyIncomes.collectAsState()
+    val currentCalendarMonthIncomes by viewModel.currentCalendarMonthIncomes.collectAsState()
     val categoryProgressList by viewModel.categoryProgressList.collectAsState()
     val allCategories by viewModel.allCategories.collectAsState()
     val currentMonthExpenses by viewModel.currentMonthExpenses.collectAsState()
@@ -320,11 +321,11 @@ fun BudgetScreen(
     }
 
     // Dialogs:
-    // Add income matching Screenshot 1 exactly (just MAD amount + note for Other Incomes)
+    // Add income matching Screenshot 1 exactly (just MAD amount + note for Other Incomes in current calendar month)
     if (showAddIncomeDialog) {
         AddIncomeDialog(
             currency = household.currency,
-            existingIncomesCount = incomes.size,
+            existingIncomesCount = currentCalendarMonthIncomes.size,
             onDismiss = { showAddIncomeDialog = false },
             onSave = { amount, note ->
                 viewModel.addIncome(amount = amount, note = note)

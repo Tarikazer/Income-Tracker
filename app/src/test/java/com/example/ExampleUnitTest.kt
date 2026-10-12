@@ -168,6 +168,16 @@ class ExampleUnitTest {
             "Supprimer Loyer et ses 3 achats ? Cette action est irréversible.",
             frStrings.deleteCategoryConfirmation("Loyer", 3)
         )
+
+        // AddIncomeDialog strings
+        assertEquals("Note (optional)", enStrings.noteFacultatifLabel)
+        assertEquals("Note (facultatif)", frStrings.noteFacultatifLabel)
+        assertEquals("Monthly Income", enStrings.monthlyIncome)
+        assertEquals("Revenu Mensuel", frStrings.monthlyIncome)
+        assertEquals("Other Incomes", enStrings.otherIncomes)
+        assertEquals("Autres Revenus", frStrings.otherIncomes)
+        assertEquals("Please enter a valid amount.", enStrings.pleaseEnterValidAmount)
+        assertEquals("Veuillez saisir un montant valide.", frStrings.pleaseEnterValidAmount)
     }
 
     @Test

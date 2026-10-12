@@ -57,11 +57,12 @@ fun AddIncomeDialog(
     onDismiss: () -> Unit,
     onSave: (amount: Double, note: String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var amountText by remember { mutableStateOf("") }
     var noteText by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val isFirstIncome = existingIncomesCount == 0
-    val incomeCategoryLabel = if (isFirstIncome) "Monthly Income" else "Other Incomes"
+    val incomeCategoryLabel = if (isFirstIncome) strings.monthlyIncome else strings.otherIncomes
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -84,7 +85,7 @@ fun AddIncomeDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Add income",
+                        text = strings.addIncomeTitle,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
@@ -128,9 +129,9 @@ fun AddIncomeDialog(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = if (isFirstIncome)
-                        "This will be recorded as your main Monthly Income."
+                        strings.firstIncomeHelperText
                     else
-                        "This will be recorded and labeled as Other Incomes.",
+                        strings.otherIncomeHelperText,
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = TextSecondary,
                         fontSize = 12.sp
@@ -168,7 +169,7 @@ fun AddIncomeDialog(
                     OutlinedTextField(
                         value = noteText,
                         onValueChange = { noteText = it },
-                        label = { Text("Note (optional)") },
+                        label = { Text(strings.noteFacultatifLabel) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = TextPrimary,
@@ -207,7 +208,7 @@ fun AddIncomeDialog(
                         modifier = Modifier.testTag("income_cancel_button")
                     ) {
                         Text(
-                            text = "Cancel",
+                            text = strings.cancel,
                             style = MaterialTheme.typography.labelLarge.copy(
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Medium,
@@ -222,7 +223,7 @@ fun AddIncomeDialog(
                         onClick = {
                             val amount = amountText.toDoubleOrNull()
                             if (amount == null || amount <= 0) {
-                                errorMessage = "Please enter a valid amount."
+                                errorMessage = strings.pleaseEnterValidAmount
                                 return@Button
                             }
                             onSave(amount, noteText.trim())
@@ -236,7 +237,7 @@ fun AddIncomeDialog(
                         modifier = Modifier.testTag("save_income_button")
                     ) {
                         Text(
-                            text = "Save",
+                            text = strings.save,
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 15.sp

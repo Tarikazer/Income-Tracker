@@ -77,6 +77,19 @@ class AppStrings(val language: AppLanguage) {
     val dateTimeHelper = if (isFrench) "Choisissez la date et l'heure de cet achat" else "Select the date and time of this purchase"
     val lockedHelper = if (isFrench) "Date et heure verrouillées après création (règle des 24h)" else "Date & time locked after creation (24h edit window)"
 
+    // Add Income Dialog
+    val addIncomeTitle = if (isFrench) "Ajouter un revenu" else "Add income"
+    val noteFacultatifLabel = if (isFrench) "Note (facultatif)" else "Note (optional)"
+    val firstIncomeHelperText = if (isFrench)
+        "Ceci sera enregistré comme votre Revenu Mensuel principal."
+    else
+        "This will be recorded as your main Monthly Income."
+    val otherIncomeHelperText = if (isFrench)
+        "Ceci sera enregistré et étiqueté comme Autres Revenus."
+    else
+        "This will be recorded and labeled as Other Incomes."
+    val pleaseEnterValidAmount = if (isFrench) "Veuillez saisir un montant valide." else "Please enter a valid amount."
+
     // Settings Screen
     val settingsTitle = if (isFrench) "Paramètres" else "Settings"
     val appearanceSection = if (isFrench) "Apparence & Thème" else "Appearance & Theme"
