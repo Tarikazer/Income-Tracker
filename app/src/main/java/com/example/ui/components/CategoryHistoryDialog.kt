@@ -162,7 +162,7 @@ fun CategoryHistoryDialog(
                             .fillMaxWidth()
                             .heightIn(max = 350.dp)
                     ) {
-                        items(expenses) { expense ->
+                        items(expenses, key = { "cat_history_expense_${it.id}" }) { expense ->
                             val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
                             ExpenseItemRow(
                                 expense = expense,

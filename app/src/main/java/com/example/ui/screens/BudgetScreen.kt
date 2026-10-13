@@ -182,7 +182,7 @@ fun BudgetScreen(
             }
 
             if (incomes.isEmpty()) {
-                item {
+                item(key = "empty_incomes") {
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = colors.surface,
@@ -197,7 +197,7 @@ fun BudgetScreen(
                     }
                 }
             } else {
-                items(incomes, key = { it.id }) { income ->
+                items(incomes, key = { "income_${it.id}" }) { income ->
                     IncomeRow(
                         income = income,
                         currency = household.currency,
@@ -207,7 +207,7 @@ fun BudgetScreen(
             }
 
             // Categories Section
-            item {
+            item(key = "categories_section_header") {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -235,7 +235,7 @@ fun BudgetScreen(
             }
 
             if (categoryProgressList.isEmpty()) {
-                item {
+                item(key = "empty_categories") {
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = colors.surface,
@@ -250,7 +250,7 @@ fun BudgetScreen(
                     }
                 }
             } else {
-                items(categoryProgressList, key = { it.category.id }) { item ->
+                items(categoryProgressList, key = { "category_${it.category.id}" }) { item ->
                     val coverage = categoryCoverageMap[item.category.id]
                     CategoryCard(
                         categoryData = item,

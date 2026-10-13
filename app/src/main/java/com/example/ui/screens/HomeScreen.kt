@@ -405,7 +405,7 @@ fun HomeScreen(
                         }
                     }
 
-                    items(group.expenses, key = { it.id }) { expense ->
+                    items(group.expenses, key = { "expense_${it.id}" }) { expense ->
                         val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
                         ExpenseItemRow(
                             expense = expense,
