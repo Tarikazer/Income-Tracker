@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -6,7 +8,7 @@ plugins {
 
 android {
   namespace = "com.example"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  compileSdk = 36
 
   defaultConfig {
     applicationId = "com.aistudio.incomecontrol.tkrzq"
@@ -19,14 +21,44 @@ android {
   }
 
   signingConfigs {
-    val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-    val keystoreFile = file(keystorePath)
-    if (keystoreFile.exists()) {
+    val envKeystorePath = System.getenv("KEYSTORE_FILE")
+    val envKeystorePassword = System.getenv("KEYSTORE_PASSWORD")
+    val envKeyAlias = System.getenv("KEY_ALIAS")
+    val envKeyPassword = System.getenv("KEY_PASSWORD")
+
+    val hasEnvSigning = !envKeystorePath.isNullOrBlank() &&
+        file(envKeystorePath).exists() &&
+        !envKeystorePassword.isNullOrBlank() &&
+        !envKeyAlias.isNullOrBlank() &&
+        !envKeyPassword.isNullOrBlank()
+
+    val keystorePropsFile = rootProject.file("keystore.properties")
+    val keystoreProps = Properties()
+    val hasPropsSigning = if (!hasEnvSigning && keystorePropsFile.exists()) {
+      keystorePropsFile.inputStream().use { keystoreProps.load(it) }
+      val storeFilePath = keystoreProps.getProperty("storeFile")
+      !storeFilePath.isNullOrBlank() &&
+          rootProject.file(storeFilePath).exists() &&
+          !keystoreProps.getProperty("storePassword").isNullOrBlank() &&
+          !keystoreProps.getProperty("keyAlias").isNullOrBlank() &&
+          !keystoreProps.getProperty("keyPassword").isNullOrBlank()
+    } else {
+      false
+    }
+
+    if (hasEnvSigning) {
       create("release") {
-        storeFile = keystoreFile
-        storePassword = System.getenv("STORE_PASSWORD")
-        keyAlias = "upload"
-        keyPassword = System.getenv("KEY_PASSWORD")
+        storeFile = file(envKeystorePath!!)
+        storePassword = envKeystorePassword
+        keyAlias = envKeyAlias
+        keyPassword = envKeyPassword
+      }
+    } else if (hasPropsSigning) {
+      create("release") {
+        storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+        storePassword = keystoreProps.getProperty("storePassword")
+        keyAlias = keystoreProps.getProperty("keyAlias")
+        keyPassword = keystoreProps.getProperty("keyPassword")
       }
     }
   }
@@ -45,55 +77,57 @@ android {
       // Uses Android default debug keystore
     }
   }
+
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
+
   buildFeatures {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
-  dependenciesInfo {
-    includeInApk = false
-    includeInBundle = true
+
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+    }
   }
 }
 
 ksp {
-  arg("room.schemaLocation", "$projectDir/schemas")
+  arg("room.schemaLocation", "${projectDir}/schemas")
 }
 
 dependencies {
-  implementation(platform(libs.androidx.compose.bom))
+  implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.lifecycle.runtime.ktx)
+  implementation(libs.androidx.lifecycle.viewmodel.compose)
+  implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.activity.compose)
-  implementation(libs.androidx.compose.material.icons.core)
-  implementation(libs.androidx.compose.material.icons.extended)
-  implementation(libs.androidx.compose.material3)
+  implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
-  implementation(libs.androidx.core.ktx)
-  implementation(libs.androidx.lifecycle.runtime.compose)
-  implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.lifecycle.viewmodel.compose)
-  implementation(libs.androidx.room.ktx)
-  implementation(libs.androidx.room.runtime)
-  implementation(libs.kotlinx.coroutines.android)
-  implementation(libs.kotlinx.coroutines.core)
+  implementation(libs.androidx.compose.material3)
+  implementation(libs.androidx.navigation.compose)
+  implementation(libs.androidx.compose.material.icons.extended)
 
-  testImplementation(libs.androidx.compose.ui.test.junit4)
-  testImplementation(libs.androidx.core)
-  testImplementation(libs.androidx.junit)
+  // Room Database
+  implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.room.ktx)
+  ksp(libs.androidx.room.compiler)
+
+  // Testing
   testImplementation(libs.junit)
-  testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
+  testImplementation(libs.androidx.junit)
+  testImplementation(libs.androidx.core)
+  testImplementation(libs.kotlinx.coroutines.test)
+  androidTestImplementation(libs.androidx.junit)
+  androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-  androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.androidx.junit)
-  androidTestImplementation(libs.androidx.runner)
-  debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
-  "ksp"(libs.androidx.room.compiler)
+  debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

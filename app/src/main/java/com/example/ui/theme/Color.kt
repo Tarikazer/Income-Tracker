@@ -33,6 +33,7 @@ data class AppColors(
     val surface: Color,
     val surfaceElevated: Color,
     val cardBorder: Color,
+    val cardBackground: Color = surface,
     val primary: Color,
     val primaryLight: Color,
     val primaryDark: Color,

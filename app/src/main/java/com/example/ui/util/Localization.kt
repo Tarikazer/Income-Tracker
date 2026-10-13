@@ -20,6 +20,10 @@ class AppStrings(val language: AppLanguage) {
     val appName = if (isFrench) "Contrôle des Revenus" else "Income Control"
     val home = if (isFrench) "Accueil" else "Home"
     val budget = if (isFrench) "Budget & Revenu" else "Budget"
+    val budgetNav = budget
+    val monthlyFinanceSummary = if (isFrench) "Résumé Financier" else "Financial Summary"
+    val noIncomeYet = if (isFrench) "Aucun revenu enregistré ce mois-ci" else "No income recorded for this month yet"
+    val noCategoriesYet = if (isFrench) "Aucune catégorie ce mois-ci" else "No categories active for this month"
     val statistics = if (isFrench) "Statistiques" else "Reports"
     val settings = if (isFrench) "Paramètres" else "Settings"
     val backupRestore = if (isFrench) "Sauvegarde & Restauration" else "Backup & Restore"

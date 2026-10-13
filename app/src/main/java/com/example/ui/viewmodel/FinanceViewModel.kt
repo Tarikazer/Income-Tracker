@@ -96,6 +96,7 @@ class FinanceViewModel(
     // Current selected month: defaults to system time "2026-10"
     private val _selectedMonthYear = MutableStateFlow(getCurrentMonthYear())
     val selectedMonthYear: StateFlow<String> = _selectedMonthYear.asStateFlow()
+    val selectedMonth: StateFlow<String> get() = selectedMonthYear
 
     // Navigation screen state
     private val _currentScreen = MutableStateFlow(AppScreen.HOME)
@@ -164,6 +165,7 @@ class FinanceViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+    val incomesForMonth: StateFlow<List<IncomeEntity>> get() = monthlyIncomes
 
     val currentCalendarMonthIncomes: StateFlow<List<IncomeEntity>> = repository
         .getIncomesForMonth(getCurrentMonthYear())
@@ -243,6 +245,7 @@ class FinanceViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+    val categoryExpenseBreakdown: StateFlow<List<CategoryExpenseBreakdown>> get() = categoryBreakdown
 
     val dailySpendingTrend: StateFlow<List<DailySpendPoint>> = combine(
         currentMonthExpenses,
@@ -312,6 +315,10 @@ class FinanceViewModel(
     fun resetToCurrentMonth() {
         _selectedMonthYear.value = getCurrentMonthYear()
     }
+
+    fun selectNextMonth() = nextMonth()
+    fun selectPreviousMonth() = previousMonth()
+    fun selectCurrentMonth() = resetToCurrentMonth()
 
     // Filter controls
     fun setSearchQuery(query: String) {
@@ -639,6 +646,10 @@ class FinanceViewModel(
         }
     }
 
+    fun addCategory(name: String, iconKey: String, isRecurring: Boolean = true) {
+        addNewCategory(name, iconKey, isRecurring)
+    }
+
     companion object {
         fun computeCategoryBreakdown(
             expenses: List<ExpenseEntity>,
@@ -680,7 +691,7 @@ class FinanceViewModel(
                     name = separateName,
                     iconKey = "shopping",
                     isRecurring = false,
-                    colorHex = 0xFF64748BL, // neutral slate color
+                    colorHex = 0xFF64748B, // neutral slate color
                     householdId = 1,
                     displayOrder = 999
                 )

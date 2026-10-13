@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,16 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.data.model.CategoryEntity
 import com.example.data.model.ExpenseEntity
 import com.example.data.model.IncomeEntity
 import com.example.ui.components.*
-import com.example.ui.theme.*
+import com.example.ui.theme.AccentRed
+import com.example.ui.theme.LocalAppColors
 import com.example.ui.util.LocalAppStrings
-import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.FinanceViewModel
 import com.example.util.AppConstants
 import java.util.Locale
@@ -36,129 +35,52 @@ fun BudgetScreen(
     viewModel: FinanceViewModel,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalAppColors.current
     val strings = LocalAppStrings.current
+
     val household by viewModel.household.collectAsState()
-    val monthYear by viewModel.selectedMonthYear.collectAsState()
-    val summary by viewModel.monthlySummary.collectAsState()
-    val incomes by viewModel.monthlyIncomes.collectAsState()
-    val currentCalendarMonthIncomes by viewModel.currentCalendarMonthIncomes.collectAsState()
+    val selectedMonth by viewModel.selectedMonth.collectAsState()
+    val incomes by viewModel.incomesForMonth.collectAsState()
+    val monthlySummary by viewModel.monthlySummary.collectAsState()
     val categoryProgressList by viewModel.categoryProgressList.collectAsState()
-    val allCategories by viewModel.allCategories.collectAsState()
-    val currentMonthExpenses by viewModel.currentMonthExpenses.collectAsState()
     val categoryCoverageMap by viewModel.categoryCoverageMap.collectAsState()
+    val allExpenses by viewModel.currentMonthExpenses.collectAsState()
 
     var showAddIncomeDialog by remember { mutableStateOf(false) }
-    var categoryForAddExpense by remember { mutableStateOf<CategoryEntity?>(null) }
-    var coveredCategoryToAddAnyway by remember { mutableStateOf<CategoryEntity?>(null) }
-    var showHouseholdDialog by remember { mutableStateOf(false) }
-
-    var categoryForHistory by remember { mutableStateOf<CategoryEntity?>(null) }
-    var incomeToDelete by remember { mutableStateOf<IncomeEntity?>(null) }
-    var categoryToDelete by remember { mutableStateOf<CategoryEntity?>(null) }
-    var categoryToReorder by remember { mutableStateOf<CategoryEntity?>(null) }
-    var expenseToEdit by remember { mutableStateOf<ExpenseEntity?>(null) }
-    var expenseToDelete by remember { mutableStateOf<ExpenseEntity?>(null) }
-
     var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var categoryForAddExpense by remember { mutableStateOf<CategoryEntity?>(null) }
+    var categoryForHistory by remember { mutableStateOf<CategoryEntity?>(null) }
+    var categoryToReorder by remember { mutableStateOf<CategoryEntity?>(null) }
+    var categoryToDelete by remember { mutableStateOf<CategoryEntity?>(null) }
+    var incomeToDelete by remember { mutableStateOf<IncomeEntity?>(null) }
+    var coveredCategoryToAddAnyway by remember { mutableStateOf<CategoryEntity?>(null) }
 
     Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .testTag("budget_screen"),
-        containerColor = EmeraldBackground,
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-            ) {
-                // Top App Bar matching Screenshot 2: Back arrow, "Tarik ⌄", Chart icon
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        IconButton(
-                            onClick = { viewModel.navigateTo(AppScreen.HOME) },
-                            modifier = Modifier
-                                .size(48.dp)
-                                .testTag("budget_back_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Back to home",
-                                tint = TextPrimary
-                            )
-                        }
-
-                        // Household name with header logo (weighted so it truncates on long names)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .weight(1f, fill = false)
-                                .clickable { showHouseholdDialog = true }
-                                .padding(vertical = 4.dp, horizontal = 2.dp)
-                                .testTag("budget_household_title")
-                        ) {
-                            IncomeControlHeaderLogo(size = 32.dp)
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier.weight(1f, fill = false)
-                            ) {
-                                Text(
-                                    text = household.name,
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary,
-                                        fontSize = 20.sp
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Icon(
-                                    imageVector = Icons.Rounded.UnfoldMore,
-                                    contentDescription = "Household options",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // Chart / Trends icon at top right
-                    IconButton(
-                        onClick = { viewModel.navigateTo(AppScreen.STATISTICS) },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .testTag("budget_trends_icon")
-                    ) {
-                        @Suppress("DEPRECATION")
-                        Icon(
-                            imageVector = Icons.Rounded.ShowChart,
-                            contentDescription = "Interactive charts & reports",
-                            tint = TextPrimary
+            TopAppBar(
+                title = {
+                    Text(
+                        text = strings.budgetNav,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary,
+                            fontSize = 20.sp
                         )
+                    )
+                },
+                actions = {
+                    IconButton(
+                        onClick = { showAddCategoryDialog = true },
+                        modifier = Modifier.testTag("add_category_app_bar_button")
+                    ) {
+                        Icon(Icons.Rounded.AddCircleOutline, contentDescription = strings.newCategory, tint = colors.textPrimary)
                     }
-                }
-
-                // Month selector: < October 2026 >
-                MonthSelector(
-                    monthYear = monthYear,
-                    onPreviousMonth = { viewModel.previousMonth() },
-                    onNextMonth = { viewModel.nextMonth() },
-                    onResetCurrentMonth = { viewModel.resetToCurrentMonth() }
-                )
-            }
-        }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.background)
+            )
+        },
+        containerColor = colors.background,
+        modifier = modifier.fillMaxSize().testTag("budget_screen")
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -167,90 +89,126 @@ fun BudgetScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Hero Budget Summary Card (Matching Screenshot 2 exactly)
             item {
-                BudgetSummaryCard(
-                    totalIncome = summary.totalIncome,
-                    totalSpent = summary.totalSpent,
-                    actualRemaining = summary.actualRemaining,
-                    currency = household.currency,
-                    modifier = Modifier.padding(top = 4.dp)
+                MonthSelector(
+                    monthYear = selectedMonth,
+                    onPreviousMonth = { viewModel.selectPreviousMonth() },
+                    onNextMonth = { viewModel.selectNextMonth() },
+                    onResetCurrentMonth = { viewModel.selectCurrentMonth() }
                 )
             }
 
-            // Monthly income Section Header
+            // Summary banner (Total Income / Spent / Balance)
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = colors.surface,
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    modifier = Modifier.fillMaxWidth().testTag("budget_summary_banner")
                 ) {
-                    Text(
-                        text = strings.monthlyIncomeSection,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
-                            fontSize = 16.sp
-                        )
-                    )
-
-                    // "+ Add income" button card matching screenshot 2
-                    Surface(
-                        onClick = { showAddIncomeDialog = true },
-                        shape = RoundedCornerShape(16.dp),
-                        color = EmeraldSurfaceElevated,
-                        border = BorderStroke(1.dp, EmeraldCardBorder),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("add_income_card_button")
-                    ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = null,
-                                tint = TextSecondary,
-                                modifier = Modifier.size(20.dp)
+                            Text(
+                                text = strings.monthlyFinanceSummary,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.textPrimary,
+                                    fontSize = 16.sp
+                                )
                             )
                             Text(
-                                text = strings.addIncome,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 15.sp
+                                text = "${AppConstants.formatCurrency(monthlySummary.actualRemaining)} ${household.currency}",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (monthlySummary.actualRemaining >= 0) Color(0xFF10B981) else Color(0xFFEF4444),
+                                    fontSize = 16.sp
                                 )
                             )
                         }
-                    }
 
-                    // Existing incomes list: first is Monthly Income, subsequent are Other Incomes
-                    incomes.forEachIndexed { index, income ->
-                        val displaySource = if (income.source.equals("Monthly income", ignoreCase = true) ||
-                            income.source.equals("Monthly Income", ignoreCase = true) ||
-                            income.source.equals("Other Incomes", ignoreCase = true) ||
-                            income.source.equals("Other Income", ignoreCase = true) ||
-                            income.source.equals("Revenu Mensuel", ignoreCase = true) ||
-                            income.source.equals("Autres Revenus", ignoreCase = true)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            if (index == 0) strings.monthlyIncome else strings.otherIncomes
-                        } else {
-                            income.source
+                            Column {
+                                Text(strings.totalIncome, style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary, fontSize = 12.sp))
+                                Text(
+                                    "${AppConstants.formatCurrency(monthlySummary.totalIncome)} ${household.currency}",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(strings.totalSpent, style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary, fontSize = 12.sp))
+                                Text(
+                                    "${AppConstants.formatCurrency(monthlySummary.totalSpent)} ${household.currency}",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+                                )
+                            }
                         }
-                        IncomeRow(
-                            income = income.copy(source = displaySource),
-                            currency = household.currency,
-                            onDelete = { incomeToDelete = income }
-                        )
                     }
                 }
             }
 
-            // Categories Section Header
+            // Income section
             item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = strings.monthlyIncomeSection,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary,
+                            fontSize = 17.sp
+                        )
+                    )
+                    TextButton(
+                        onClick = { showAddIncomeDialog = true },
+                        modifier = Modifier.testTag("add_income_button")
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(strings.addIncome, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
+                    }
+                }
+            }
+
+            if (incomes.isEmpty()) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = colors.surface,
+                        border = BorderStroke(1.dp, colors.cardBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = strings.noIncomeYet,
+                            style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary),
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            } else {
+                items(incomes, key = { it.id }) { income ->
+                    IncomeRow(
+                        income = income,
+                        currency = household.currency,
+                        onDelete = { incomeToDelete = income }
+                    )
+                }
+            }
+
+            // Categories Section
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -259,130 +217,91 @@ fun BudgetScreen(
                     Text(
                         text = strings.categories,
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
-                            fontSize = 16.sp
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary,
+                            fontSize = 17.sp
                         )
                     )
-
-                    TextButton(
+                    FilledTonalButton(
                         onClick = { showAddCategoryDialog = true },
-                        modifier = Modifier.testTag("add_custom_category_button")
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.testTag("add_category_button")
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.AddCircleOutline,
-                            contentDescription = null,
-                            tint = EmeraldPrimary,
-                            modifier = Modifier.size(16.dp)
-                        )
+                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = strings.newCategory,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = EmeraldPrimary,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
+                        Text(strings.newCategory, fontSize = 13.sp)
                     }
                 }
             }
 
-            // Category Cards matching screenshot 2:
-            // Rent, Sport, Alimentation, Water Bill, Electricity Bill, Internet Bill, Family
-            items(categoryProgressList, key = { it.category.id }) { catData ->
-                val coverage = categoryCoverageMap[catData.category.id]
-                CategoryCard(
-                    categoryData = catData,
-                    currency = household.currency,
-                    coverage = coverage,
-                    onAddExpense = {
-                        if (coverage != null) {
-                            coveredCategoryToAddAnyway = catData.category
-                        } else {
-                            categoryForAddExpense = catData.category
-                        }
-                    },
-                    onViewHistory = {
-                        categoryForHistory = catData.category
-                    },
-                    onReorder = {
-                        categoryToReorder = catData.category
-                    },
-                    onDeleteCategory = {
-                        categoryToDelete = catData.category
+            if (categoryProgressList.isEmpty()) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = colors.surface,
+                        border = BorderStroke(1.dp, colors.cardBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = strings.noCategoriesYet,
+                            style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary),
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
-                )
+                }
+            } else {
+                items(categoryProgressList, key = { it.category.id }) { item ->
+                    val coverage = categoryCoverageMap[item.category.id]
+                    CategoryCard(
+                        categoryData = item,
+                        currency = household.currency,
+                        coverage = coverage,
+                        onAddExpense = {
+                            if (coverage != null) {
+                                coveredCategoryToAddAnyway = item.category
+                            } else {
+                                categoryForAddExpense = item.category
+                            }
+                        },
+                        onViewHistory = { categoryForHistory = item.category },
+                        onReorder = { categoryToReorder = item.category },
+                        onDeleteCategory = { categoryToDelete = item.category }
+                    )
+                }
             }
 
             item {
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }
 
-    // Dialogs:
-    // Add income matching Screenshot 1 exactly (just MAD amount + note for Other Incomes in current calendar month)
+    // Add Income Dialog
     if (showAddIncomeDialog) {
         AddIncomeDialog(
             currency = household.currency,
-            existingIncomesCount = currentCalendarMonthIncomes.size,
+            existingIncomesCount = incomes.size,
             onDismiss = { showAddIncomeDialog = false },
-            onSave = { amount, note ->
-                viewModel.addIncome(amount = amount, note = note)
+            onSave = { amount ->
+                viewModel.addIncome(amount)
                 showAddIncomeDialog = false
             }
         )
     }
 
-    // Confirmation dialog if category is already covered
-    if (coveredCategoryToAddAnyway != null) {
-        val cat = coveredCategoryToAddAnyway!!
-        val coverage = categoryCoverageMap[cat.id]
-        val endMonthFormatted = if (coverage != null) {
-            AppConstants.formatMonthYear(coverage.endMonthYear, strings.isFrench)
-        } else ""
-
-        AlertDialog(
-            onDismissRequest = { coveredCategoryToAddAnyway = null },
-            title = {
-                Text(
-                    text = strings.coveredAddAnywayTitle(cat.name, endMonthFormatted),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val targetCat = cat
-                        coveredCategoryToAddAnyway = null
-                        categoryForAddExpense = targetCat
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = EmeraldPrimary,
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier.testTag("confirm_add_anyway_button")
-                ) {
-                    Text(strings.addAnyway, fontWeight = FontWeight.SemiBold)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { coveredCategoryToAddAnyway = null },
-                    modifier = Modifier.testTag("cancel_add_anyway_button")
-                ) {
-                    Text(strings.cancel, color = TextPrimary)
-                }
-            },
-            containerColor = EmeraldSurfaceElevated,
-            shape = RoundedCornerShape(18.dp)
+    // Add Category Dialog
+    if (showAddCategoryDialog) {
+        AddCategoryDialog(
+            currency = household.currency,
+            onDismiss = { showAddCategoryDialog = false },
+            onSave = { name, iconKey ->
+                viewModel.addCategory(name = name, iconKey = iconKey)
+                showAddCategoryDialog = false
+            }
         )
     }
 
-    // Add category expense matching Screenshot 2 exactly (MAD amount + Note optional + Helper text)
+    // Add Category Expense Dialog
     if (categoryForAddExpense != null) {
         val cat = categoryForAddExpense!!
         AddCategoryExpenseDialog(
@@ -396,49 +315,75 @@ fun BudgetScreen(
         )
     }
 
-    if (categoryForHistory != null) {
-        val cat = categoryForHistory!!
-        val catExpenses = currentMonthExpenses.filter { it.categoryId == cat.id }
-        val coverage = categoryCoverageMap[cat.id]
-        CategoryHistoryDialog(
-            category = cat,
-            expenses = catExpenses,
-            currency = household.currency,
-            coverage = coverage,
-            onDismiss = { categoryForHistory = null },
-            onEditExpense = { expenseToEdit = it },
-            onDeleteExpense = { expenseToDelete = it }
-        )
-    }
-
-    // Edit Transaction Dialog for category transactions
-    if (expenseToEdit != null) {
-        val exp = expenseToEdit!!
-        EditShoppingExpenseDialog(
-            expense = exp,
-            currency = household.currency,
-            onDismiss = { expenseToEdit = null },
-            onSave = { newTitle, newAmount, newNote, newCoversMonths ->
-                viewModel.updateShoppingExpense(exp, newTitle, newAmount, newNote, newCoversMonths)
-                expenseToEdit = null
+    // Add Anyway confirmation if already covered
+    if (coveredCategoryToAddAnyway != null) {
+        val cat = coveredCategoryToAddAnyway!!
+        val cov = categoryCoverageMap[cat.id]
+        AlertDialog(
+            onDismissRequest = { coveredCategoryToAddAnyway = null },
+            title = { Text(strings.coveredAddAnywayTitle(cat.name, cov?.endMonthYear ?: "")) },
+            text = { Text(strings.alreadyPaidCoveredUntil(cov?.endMonthYear ?: "")) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        categoryForAddExpense = cat
+                        coveredCategoryToAddAnyway = null
+                    }
+                ) {
+                    Text(strings.addAnyway)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { coveredCategoryToAddAnyway = null }) {
+                    Text(strings.cancel)
+                }
             }
         )
     }
 
-    // Delete Expense Confirmation Dialog
-    if (expenseToDelete != null) {
-        val exp = expenseToDelete!!
-        val amountStr = String.format(Locale.US, "%,.2f", exp.amount)
+    // Category History Dialog
+    if (categoryForHistory != null) {
+        val cat = categoryForHistory!!
+        val catExpenses = allExpenses.filter { it.categoryId == cat.id }
+        CategoryHistoryDialog(
+            category = cat,
+            expenses = catExpenses,
+            currency = household.currency,
+            coverage = categoryCoverageMap[cat.id],
+            onDismiss = { categoryForHistory = null },
+            onDeleteExpense = { exp -> viewModel.deleteExpense(exp) }
+        )
+    }
+
+    // Reorder Dialog
+    if (categoryToReorder != null) {
+        val cat = categoryToReorder!!
+        val index = categoryProgressList.indexOfFirst { it.category.id == cat.id }
+        ReorderCategoryDialog(
+            category = cat,
+            canMoveUp = index > 0,
+            canMoveDown = index in 0 until (categoryProgressList.size - 1),
+            onMoveUp = { viewModel.moveCategoryUp(cat) },
+            onMoveDown = { viewModel.moveCategoryDown(cat) },
+            onDismiss = { categoryToReorder = null }
+        )
+    }
+
+    // Delete Category Confirmation Dialog
+    if (categoryToDelete != null) {
+        val cat = categoryToDelete!!
+        val item = categoryProgressList.firstOrNull { it.category.id == cat.id }
+        val count = item?.expensesCount ?: 0
         ConfirmDeleteDialog(
-            title = strings.deleteExpenseTitle,
-            message = strings.deleteExpenseConfirmation(exp.title, amountStr, household.currency),
+            title = strings.deleteCategoryTitle,
+            message = strings.deleteCategoryFromMonthConfirmation(cat.name, selectedMonth, count),
             confirmText = strings.delete,
             cancelText = strings.cancel,
             onConfirm = {
-                viewModel.deleteExpense(exp)
-                expenseToDelete = null
+                viewModel.deleteCategory(cat)
+                categoryToDelete = null
             },
-            onDismiss = { expenseToDelete = null }
+            onDismiss = { categoryToDelete = null }
         )
     }
 
@@ -458,146 +403,68 @@ fun BudgetScreen(
             onDismiss = { incomeToDelete = null }
         )
     }
-
-    if (showHouseholdDialog) {
-        HouseholdDialog(
-            currentName = household.name,
-            currentCurrency = household.currency,
-            onDismiss = { showHouseholdDialog = false },
-            onSave = { name, curr ->
-                viewModel.updateHousehold(name, curr)
-                showHouseholdDialog = false
-            }
-        )
-    }
-
-    if (categoryToDelete != null) {
-        val cat = categoryToDelete!!
-        var expenseCount by remember(cat.id, monthYear) { mutableStateOf<Int?>(null) }
-        LaunchedEffect(cat.id, monthYear) {
-            expenseCount = viewModel.getExpenseCountForCategoryFromMonth(cat.id, monthYear)
-        }
-
-        val monthFormatted = AppConstants.formatMonthYear(monthYear, strings.isFrench)
-        ConfirmDeleteDialog(
-            title = strings.deleteCategoryTitle,
-            message = strings.deleteCategoryFromMonthConfirmation(cat.name, monthFormatted, expenseCount ?: 0),
-            confirmText = strings.delete,
-            cancelText = strings.cancel,
-            onConfirm = {
-                viewModel.deleteCategoryFromSelectedMonth(cat)
-                categoryToDelete = null
-            },
-            onDismiss = { categoryToDelete = null }
-        )
-    }
-
-    if (categoryToReorder != null) {
-        val cat = categoryToReorder!!
-        val index = categoryProgressList.indexOfFirst { it.category.id == cat.id }
-        ReorderCategoryDialog(
-            category = cat,
-            canMoveUp = index > 0,
-            canMoveDown = index in 0 until categoryProgressList.size - 1,
-            onMoveUp = { viewModel.moveCategoryUp(cat) },
-            onMoveDown = { viewModel.moveCategoryDown(cat) },
-            onDismiss = { categoryToReorder = null }
-        )
-    }
-
-    if (showAddCategoryDialog) {
-        AddCategoryDialog(
-            currency = household.currency,
-            onDismiss = { showAddCategoryDialog = false },
-            onSave = { name, iconKey ->
-                viewModel.addNewCategory(name, iconKey)
-                showAddCategoryDialog = false
-            }
-        )
-    }
 }
 
 @Composable
-private fun IncomeRow(
+fun IncomeRow(
     income: IncomeEntity,
     currency: String,
     onDelete: () -> Unit
 ) {
+    val colors = LocalAppColors.current
+
     Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = EmeraldSurface,
-        border = BorderStroke(1.dp, EmeraldCardBorder),
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("income_row_${income.id}")
+        shape = RoundedCornerShape(16.dp),
+        color = colors.surface,
+        border = BorderStroke(1.dp, colors.cardBorder),
+        modifier = Modifier.fillMaxWidth().testTag("income_row_${income.id}")
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                @Suppress("DEPRECATION")
-                Icon(
-                    imageVector = Icons.Rounded.TrendingUp,
-                    contentDescription = null,
-                    tint = AccentOnSurface,
-                    modifier = Modifier.size(18.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = income.source,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary,
+                        fontSize = 15.sp
+                    )
                 )
-                Column {
+                if (income.note.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = income.source,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold
+                        text = income.note,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = colors.textSecondary,
+                            fontSize = 12.sp
                         )
                     )
-                    if (income.isRecurring) {
-                        Text(
-                            text = "Recurring Monthly",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = EmeraldCyan,
-                                fontSize = 11.sp
-                            )
-                        )
-                    }
-                    if (income.note.isNotBlank()) {
-                        Text(
-                            text = income.note,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextSecondary,
-                                fontSize = 11.5.sp
-                            )
-                        )
-                    }
                 }
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "+ ${String.format(Locale.US, "%,.2f", income.amount)} $currency",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = AccentOnSurface,
-                        fontWeight = FontWeight.Bold
+                    text = "+${AppConstants.formatCurrency(income.amount)} $currency",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        fontSize = 15.sp
                     )
                 )
-
+                Spacer(modifier = Modifier.width(6.dp))
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(28.dp).testTag("delete_income_${income.id}")
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Delete,
+                        imageVector = Icons.Rounded.Close,
                         contentDescription = "Delete income",
-                        tint = TextMuted,
+                        tint = colors.textSecondary,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -607,123 +474,138 @@ private fun IncomeRow(
 }
 
 @Composable
-private fun AddCategoryDialog(
+fun AddCategoryDialog(
     currency: String,
     onDismiss: () -> Unit,
     onSave: (name: String, iconKey: String) -> Unit
 ) {
+    val colors = LocalAppColors.current
+    val strings = LocalAppStrings.current
     var name by remember { mutableStateOf("") }
-    var selectedIconKey by remember { mutableStateOf("other") }
+    var selectedIconKey by remember { mutableStateOf("shopping") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val iconOptions = listOf(
-        Pair("Shopping", "alimentation"),
-        Pair("Fitness", "sport"),
-        Pair("Transport", "transport"),
-        Pair("Coffee", "coffee"),
-        Pair("Restaurant", "restaurant"),
-        Pair("Health", "health"),
-        Pair("General", "other")
+        "shopping" to "Shopping",
+        "food" to "Food",
+        "restaurant" to "Dining",
+        "rent" to "Rent",
+        "transport" to "Transport",
+        "water" to "Water",
+        "power" to "Power",
+        "wifi" to "Internet",
+        "coffee" to "Coffee",
+        "health" to "Health",
+        "sport" to "Fitness",
+        "family" to "Family"
     )
 
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = EmeraldSurface,
-            border = BorderStroke(1.dp, EmeraldCardBorder),
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(horizontal = 12.dp)
+                .testTag("add_category_dialog")
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
                 Text(
-                    text = "New Category",
+                    text = strings.newCategory,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = colors.textPrimary,
+                        fontSize = 20.sp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it
+                        errorMessage = null
+                    },
                     label = { Text("Category Name") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = EmeraldPrimary,
-                        unfocusedBorderColor = EmeraldCardBorder,
-                        focusedLabelColor = EmeraldPrimary,
-                        unfocusedLabelColor = TextSecondary
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    isError = errorMessage != null,
+                    supportingText = {
+                        if (errorMessage != null) {
+                            Text(text = errorMessage!!, color = AccentRed)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("category_name_input")
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Select Icon",
-                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                    text = "Icon",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary
+                    )
                 )
-                Spacer(modifier = Modifier.height(6.dp))
-                androidx.compose.foundation.lazy.LazyRow(
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(iconOptions) { (label, key) ->
+                    iconOptions.take(4).forEach { (key, _) ->
                         val isSelected = selectedIconKey == key
                         Surface(
-                            onClick = { selectedIconKey = key },
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (isSelected) EmeraldPrimary else EmeraldSurfaceElevated,
-                            border = BorderStroke(1.dp, if (isSelected) EmeraldPrimary else EmeraldCardBorder),
-                            modifier = Modifier.padding(vertical = 2.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) colors.primary.copy(alpha = 0.15f) else colors.surface,
+                            border = BorderStroke(1.dp, if (isSelected) colors.primary else colors.cardBorder),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { selectedIconKey = key }
+                                .padding(vertical = 8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(vertical = 6.dp)) {
                                 Icon(
                                     imageVector = IconHelper.getCategoryIcon(key),
-                                    contentDescription = null,
-                                    tint = if (isSelected) Color.White else EmeraldPrimary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = if (isSelected) Color.White else TextPrimary,
-                                        fontSize = 11.sp
-                                    )
+                                    contentDescription = key,
+                                    tint = if (isSelected) colors.primary else colors.textPrimary,
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
-                    onClick = {
-                        if (name.isNotBlank()) {
-                            onSave(name.trim(), selectedIconKey)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
-                    shape = RoundedCornerShape(14.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Text(
-                        text = "Create Category",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
+                    TextButton(onClick = onDismiss) {
+                        Text(text = strings.cancel, color = colors.textPrimary)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val cleanName = name.trim()
+                            if (cleanName.isEmpty()) {
+                                errorMessage = "Name cannot be empty"
+                            } else {
+                                onSave(cleanName, selectedIconKey)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                        modifier = Modifier.testTag("save_category_button")
+                    ) {
+                        Text(text = strings.save, color = Color.White)
+                    }
                 }
             }
         }

@@ -1,11 +1,10 @@
 package com.example.ui.components
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -16,19 +15,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.CategoryEntity
 import com.example.data.model.ExpenseEntity
-import com.example.ui.theme.*
+import com.example.ui.theme.AccentRed
+import com.example.ui.theme.LocalAppColors
 import com.example.ui.util.LocalAppStrings
 import com.example.util.AppConstants
 import java.text.SimpleDateFormat
@@ -36,105 +35,52 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-// Ciel Blue (Sky Blue) & White dialog theme values
-val MintButtonColor: Color @Composable get() = LocalAppColors.current.buttonBackground
-val MintButtonTextColor: Color @Composable get() = LocalAppColors.current.buttonText
-val DialogSurfaceColor: Color @Composable get() = LocalAppColors.current.dialogSurface
-val DialogBorderColor: Color @Composable get() = LocalAppColors.current.dialogBorder
-val DefaultUnfocusedBorderColor: Color @Composable get() = if (LocalAppColors.current.isDark) Color(0xFF354B42) else EmeraldCardBorder
-
-/**
- * Add Income Dialog matching user's Screenshot 1:
- * Clean, minimalistic with only:
- * - "Add income" title
- * - "MAD" outlined text field
- * - "Cancel" and "Save" (mint button)
- */
 @Composable
 fun AddIncomeDialog(
     currency: String,
     existingIncomesCount: Int = 0,
     onDismiss: () -> Unit,
-    onSave: (amount: Double, note: String) -> Unit
+    onSave: (amount: Double) -> Unit
 ) {
+    val colors = LocalAppColors.current
     val strings = LocalAppStrings.current
     var amountText by remember { mutableStateOf("") }
-    var noteText by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
     val isFirstIncome = existingIncomesCount == 0
     val incomeCategoryLabel = if (isFirstIncome) strings.monthlyIncome else strings.otherIncomes
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 12.dp)
                 .testTag("add_income_dialog")
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(22.dp)
+                    .padding(24.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = strings.addIncomeTitle,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
-                            fontSize = 20.sp
-                        )
-                    )
-                    val isDarkTheme = LocalAppColors.current.isDark
-                    val badgeContainerColor = if (isDarkTheme) {
-                        if (isFirstIncome) Color(0xFF1B3D30) else Color(0xFF1E353B)
-                    } else {
-                        EmeraldPrimaryLight.copy(alpha = 0.35f)
-                    }
-                    val badgeBorderColor = if (isDarkTheme) {
-                        if (isFirstIncome) Color(0xFF2C634F) else Color(0xFF2E535C)
-                    } else {
-                        EmeraldCardBorder
-                    }
-                    val badgeTextColor = if (isDarkTheme) {
-                        if (isFirstIncome) Color(0xFF7DE0BA) else Color(0xFF67E8F9)
-                    } else {
-                        AccentOnSurface
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = badgeContainerColor,
-                        border = BorderStroke(1.dp, badgeBorderColor)
-                    ) {
-                        Text(
-                            text = incomeCategoryLabel,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = badgeTextColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.5.sp
-                            ),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = if (isFirstIncome)
-                        strings.firstIncomeHelperText
-                    else
-                        strings.otherIncomeHelperText,
+                    text = strings.addIncomeTitle,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        fontSize = 20.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = if (isFirstIncome) strings.firstIncomeHelperText else strings.otherIncomeHelperText,
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextSecondary,
-                        fontSize = 12.sp
+                        color = colors.textSecondary,
+                        fontSize = 13.sp
                     )
                 )
 
@@ -146,103 +92,46 @@ fun AddIncomeDialog(
                         amountText = it
                         errorMessage = null
                     },
-                    label = { Text(currency) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    label = { Text("$incomeCategoryLabel ($currency)") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = errorMessage != null,
+                    supportingText = {
+                        if (errorMessage != null) {
+                            Text(text = errorMessage!!, color = AccentRed)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("income_amount_input")
                 )
 
-                if (!isFirstIncome) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = noteText,
-                        onValueChange = { noteText = it },
-                        label = { Text(strings.noteFacultatifLabel) },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedBorderColor = MintButtonColor,
-                            unfocusedBorderColor = Color(0xFF354B42),
-                            focusedLabelColor = MintButtonColor,
-                            unfocusedLabelColor = TextSecondary,
-                            cursorColor = MintButtonColor
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("income_note_input")
-                    )
-                }
-
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = errorMessage!!,
-                        color = AccentRed,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        modifier = Modifier.testTag("income_cancel_button")
+                        modifier = Modifier.testTag("cancel_income_button")
                     ) {
-                        Text(
-                            text = strings.cancel,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 15.sp
-                            )
-                        )
+                        Text(text = strings.cancel, color = colors.textPrimary)
                     }
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     Button(
                         onClick = {
-                            val amount = amountText.toDoubleOrNull()
-                            if (amount == null || amount <= 0) {
+                            val cleanAmount = amountText.trim().replace(',', '.').toDoubleOrNull()
+                            if (cleanAmount == null || cleanAmount <= 0.0) {
                                 errorMessage = strings.pleaseEnterValidAmount
-                                return@Button
+                            } else {
+                                onSave(cleanAmount)
                             }
-                            onSave(amount, noteText.trim())
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MintButtonColor,
-                            contentColor = MintButtonTextColor
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
                         modifier = Modifier.testTag("save_income_button")
                     ) {
-                        Text(
-                            text = strings.save,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 15.sp
-                            )
-                        )
+                        Text(text = strings.save, color = Color.White)
                     }
                 }
             }
@@ -250,15 +139,6 @@ fun AddIncomeDialog(
     }
 }
 
-/**
- * Add Category Expense Dialog matching user's Screenshot 2:
- * Used when user taps "+ Add expense" on a category card (e.g. Rent, Sport, Water Bill):
- * - "Add expense" title
- * - "MAD" outlined text field
- * - "Added to this category's total spending" subtext
- * - "Note (optional)" text field
- * - "Cancel" and "Save" (mint button)
- */
 @Composable
 fun AddCategoryExpenseDialog(
     categoryName: String,
@@ -266,41 +146,39 @@ fun AddCategoryExpenseDialog(
     onDismiss: () -> Unit,
     onSave: (amount: Double, note: String, coversMonths: Int) -> Unit
 ) {
+    val colors = LocalAppColors.current
     val strings = LocalAppStrings.current
     var amountText by remember { mutableStateOf("") }
     var noteText by remember { mutableStateOf("") }
     var selectedCoversMonths by remember { mutableIntStateOf(1) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    val currentMonthYear = remember {
-        SimpleDateFormat("yyyy-MM", Locale.US).format(Date())
-    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 12.dp)
                 .testTag("add_category_expense_dialog")
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(22.dp)
+                    .padding(24.dp)
             ) {
                 Text(
-                    text = strings.addExpense,
+                    text = "${strings.addExpense} · $categoryName",
                     style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
                         fontSize = 20.sp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = amountText,
@@ -308,192 +186,91 @@ fun AddCategoryExpenseDialog(
                         amountText = it
                         errorMessage = null
                     },
-                    label = { Text(currency) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    label = { Text("${strings.addExpense} ($currency)") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = errorMessage != null,
+                    supportingText = {
+                        if (errorMessage != null) {
+                            Text(text = errorMessage!!, color = AccentRed)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("expense_amount_input")
+                        .testTag("category_expense_amount_input")
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Added to this category's total spending",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    ),
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Covers Multi-Month Selectable Chips
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = strings.coversLabel,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 12.sp
-                        ),
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-
-                    val monthOptions = listOf(
-                        1 to strings.month1,
-                        2 to strings.months2,
-                        3 to strings.months3,
-                        6 to strings.months6,
-                        12 to strings.months12
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        monthOptions.forEach { (months, label) ->
-                            val isSelected = selectedCoversMonths == months
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (isSelected) EmeraldPrimary else EmeraldPrimary.copy(alpha = 0.08f),
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (isSelected) EmeraldPrimaryDark else EmeraldCardBorder
-                                ),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { selectedCoversMonths = months }
-                                    .testTag("covers_chip_$months")
-                            ) {
-                                Box(
-                                    modifier = Modifier.padding(vertical = 7.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = label,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = if (isSelected) Color.White else TextPrimary,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            fontSize = 11.sp
-                                        ),
-                                        maxLines = 1
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    if (selectedCoversMonths > 1) {
-                        val startFormatted = AppConstants.formatMonthYear(currentMonthYear, strings.isFrench)
-                        val endMonthYear = AppConstants.addMonths(currentMonthYear, selectedCoversMonths - 1)
-                        val endFormatted = AppConstants.formatMonthYear(endMonthYear, strings.isFrench)
-                        Text(
-                            text = strings.coversHelper(startFormatted, endFormatted),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = AccentOnSurface,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp
-                            ),
-                            modifier = Modifier
-                                .padding(start = 4.dp, top = 2.dp)
-                                .testTag("covers_helper_text")
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
-                    placeholder = { Text(strings.noteOptionalLabel) },
+                    label = { Text(strings.noteOptionalLabel) },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
-                        focusedPlaceholderColor = TextMuted,
-                        unfocusedPlaceholderColor = TextMuted,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("expense_note_input")
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = errorMessage!!,
-                        color = AccentRed,
-                        style = MaterialTheme.typography.bodySmall
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = strings.coversLabel,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary
                     )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val durationOptions = listOf(
+                    1 to strings.month1,
+                    2 to strings.months2,
+                    3 to strings.months3,
+                    6 to strings.months6,
+                    12 to strings.months12
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    durationOptions.forEach { (months, label) ->
+                        val isSelected = selectedCoversMonths == months
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedCoversMonths = months },
+                            label = { Text(label, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("covers_chip_$months")
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        modifier = Modifier.testTag("expense_cancel_button")
+                        modifier = Modifier.testTag("cancel_category_expense_button")
                     ) {
-                        Text(
-                            text = strings.cancel,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 15.sp
-                            )
-                        )
+                        Text(text = strings.cancel, color = colors.textPrimary)
                     }
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     Button(
                         onClick = {
-                            val amount = amountText.toDoubleOrNull()
-                            if (amount == null || amount <= 0) {
-                                errorMessage = "Please enter a valid amount."
-                                return@Button
+                            val cleanAmount = amountText.trim().replace(',', '.').toDoubleOrNull()
+                            if (cleanAmount == null || cleanAmount <= 0.0) {
+                                errorMessage = strings.pleaseEnterValidAmount
+                            } else {
+                                onSave(cleanAmount, noteText.trim(), selectedCoversMonths)
                             }
-                            onSave(amount, noteText, selectedCoversMonths)
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MintButtonColor,
-                            contentColor = MintButtonTextColor
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
                         modifier = Modifier.testTag("save_category_expense_button")
                     ) {
-                        Text(
-                            text = strings.save,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 15.sp
-                            )
-                        )
+                        Text(text = strings.save, color = Color.White)
                     }
                 }
             }
@@ -501,11 +278,6 @@ fun AddCategoryExpenseDialog(
     }
 }
 
-/**
- * Add Shopping Expense Dialog for the Home Screen:
- * Clean, fast dialog for separate everyday items you buy (water bottles, fast food, supermarket groceries)
- * without category selection.
- */
 @Composable
 fun AddShoppingExpenseDialog(
     currency: String,
@@ -513,39 +285,43 @@ fun AddShoppingExpenseDialog(
     onSave: (title: String, amount: Double, note: String, timestamp: Long) -> Unit
 ) {
     val context = LocalContext.current
+    val colors = LocalAppColors.current
+    val strings = LocalAppStrings.current
+
     var title by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
-    var selectedTimestamp by remember { mutableStateOf(System.currentTimeMillis()) }
+    var selectedTimestamp by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.US) }
-    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.US) }
+    val calendar = remember(selectedTimestamp) {
+        Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+    }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
+    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
+    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp)
+                .padding(horizontal = 12.dp)
                 .testTag("add_shopping_expense_dialog")
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(22.dp)
+                    .padding(24.dp)
             ) {
                 Text(
-                    text = "Add expense",
+                    text = strings.addPurchaseTitle,
                     style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
                         fontSize = 20.sp
                     )
                 )
@@ -554,77 +330,16 @@ fun AddShoppingExpenseDialog(
 
                 OutlinedTextField(
                     value = title,
-                    onValueChange = {
-                        title = it
-                        errorMessage = null
-                    },
-                    label = { Text("What did you buy? (e.g. Water bottle, Fast food)") },
+                    onValueChange = { title = it },
+                    label = { Text(strings.purchaseNameLabel) },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("shopping_title_input")
                 )
 
-                // Quick item suggestion chips with compact wrapping flow
-                @OptIn(ExperimentalLayoutApi::class)
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
-                    verticalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    val suggestions = listOf(
-                        "Breakfast",
-                        "Lunch",
-                        "Dinner",
-                        "Drinks",
-                        "Supermarket",
-                        "Water bottle",
-                        "Coffee",
-                        "Fast food",
-                        "Groceries",
-                        "Snacks"
-                    )
-                    suggestions.forEach { suggestion ->
-                        val isSelected = title.equals(suggestion, ignoreCase = true)
-                        Surface(
-                            onClick = {
-                                title = suggestion
-                                errorMessage = null
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) MintButtonColor else EmeraldSurfaceElevated,
-                            border = BorderStroke(
-                                1.dp,
-                                if (isSelected) MintButtonColor else EmeraldCardBorder
-                            )
-                        ) {
-                            Text(
-                                text = suggestion,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = if (isSelected) MintButtonTextColor else TextPrimary,
-                                    fontSize = 11.5.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                ),
-                                softWrap = true,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = amountText,
@@ -632,266 +347,295 @@ fun AddShoppingExpenseDialog(
                         amountText = it
                         errorMessage = null
                     },
-                    label = { Text(currency) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    label = { Text("${strings.totalSpent} ($currency)") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = errorMessage != null,
+                    supportingText = {
+                        if (errorMessage != null) {
+                            Text(text = errorMessage!!, color = AccentRed)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("shopping_amount_input")
                 )
-
-                // Date & Time Picker Section
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "Date & Time",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 12.sp
-                        )
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Date picker button
-                        Surface(
-                            onClick = {
-                                val cal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
-                                val datePickerDialog = android.app.DatePickerDialog(
-                                    context,
-                                    { _, year, month, dayOfMonth ->
-                                        val updatedCal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
-                                        updatedCal.set(Calendar.YEAR, year)
-                                        updatedCal.set(Calendar.MONTH, month)
-                                        updatedCal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                                        val now = System.currentTimeMillis()
-                                        val newTime = updatedCal.timeInMillis
-                                        selectedTimestamp = if (newTime > now) now else newTime
-                                        errorMessage = null
-                                    },
-                                    cal.get(Calendar.YEAR),
-                                    cal.get(Calendar.MONTH),
-                                    cal.get(Calendar.DAY_OF_MONTH)
-                                )
-                                datePickerDialog.datePicker.maxDate = System.currentTimeMillis()
-                                datePickerDialog.show()
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            color = EmeraldSurfaceElevated,
-                            border = BorderStroke(1.dp, EmeraldCardBorder),
-                            modifier = Modifier
-                                .weight(1.3f)
-                                .testTag("pick_purchase_date_button")
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.CalendarToday,
-                                    contentDescription = "Pick date",
-                                    tint = MintButtonColor,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Column {
-                                    Text(
-                                        text = "Date",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = TextMuted,
-                                            fontSize = 10.sp
-                                        )
-                                    )
-                                    Text(
-                                        text = dateFormat.format(Date(selectedTimestamp)),
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            color = TextPrimary,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 13.5.sp
-                                        )
-                                    )
-                                }
-                            }
-                        }
-
-                        // Time picker button
-                        Surface(
-                            onClick = {
-                                val cal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
-                                val timePickerDialog = android.app.TimePickerDialog(
-                                    context,
-                                    { _, hourOfDay, minute ->
-                                        val updatedCal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
-                                        updatedCal.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                                        updatedCal.set(Calendar.MINUTE, minute)
-                                        updatedCal.set(Calendar.SECOND, 0)
-                                        val now = System.currentTimeMillis()
-                                        val newTime = updatedCal.timeInMillis
-                                        if (newTime > now) {
-                                            errorMessage = "Future date/time is not allowed."
-                                        } else {
-                                            selectedTimestamp = newTime
-                                            errorMessage = null
-                                        }
-                                    },
-                                    cal.get(Calendar.HOUR_OF_DAY),
-                                    cal.get(Calendar.MINUTE),
-                                    true
-                                )
-                                timePickerDialog.show()
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            color = EmeraldSurfaceElevated,
-                            border = BorderStroke(1.dp, EmeraldCardBorder),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("pick_purchase_time_button")
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Schedule,
-                                    contentDescription = "Pick time",
-                                    tint = MintButtonColor,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Column {
-                                    Text(
-                                        text = "Time",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = TextMuted,
-                                            fontSize = 10.sp
-                                        )
-                                    )
-                                    Text(
-                                        text = timeFormat.format(Date(selectedTimestamp)),
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            color = TextPrimary,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 13.5.sp
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    val isBackdated24h = (System.currentTimeMillis() - selectedTimestamp) > (24 * 3600 * 1000L)
-                    if (isBackdated24h) {
-                        Text(
-                            text = "⚠️ Backdated by >24h: purchase will be locked upon saving.",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color(0xFFFBBF24),
-                                fontSize = 11.sp
-                            ),
-                            modifier = Modifier.padding(start = 2.dp, top = 2.dp)
-                        )
-                    }
-                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    placeholder = { Text("Note (optional)") },
+                    label = { Text(strings.noteOptionalLabel) },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedPlaceholderColor = TextMuted,
-                        unfocusedPlaceholderColor = TextMuted,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("shopping_note_input")
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = errorMessage!!,
-                        color = AccentRed,
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
-                    )
-                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = strings.dateTimeLabel,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text(
-                            text = "Cancel",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 15.sp
-                            )
-                        )
+                    OutlinedCard(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, day ->
+                                        calendar.set(Calendar.YEAR, year)
+                                        calendar.set(Calendar.MONTH, month)
+                                        calendar.set(Calendar.DAY_OF_MONTH, day)
+                                        selectedTimestamp = calendar.timeInMillis
+                                    },
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                ).show()
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Rounded.CalendarToday, contentDescription = null, tint = colors.primary, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(dateFormat.format(Date(selectedTimestamp)), fontSize = 13.sp, color = colors.textPrimary)
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedCard(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                TimePickerDialog(
+                                    context,
+                                    { _, hour, minute ->
+                                        calendar.set(Calendar.HOUR_OF_DAY, hour)
+                                        calendar.set(Calendar.MINUTE, minute)
+                                        selectedTimestamp = calendar.timeInMillis
+                                    },
+                                    calendar.get(Calendar.HOUR_OF_DAY),
+                                    calendar.get(Calendar.MINUTE),
+                                    true
+                                ).show()
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Rounded.Schedule, contentDescription = null, tint = colors.primary, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(timeFormat.format(Date(selectedTimestamp)), fontSize = 13.sp, color = colors.textPrimary)
+                        }
+                    }
+                }
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.testTag("cancel_shopping_button")
+                    ) {
+                        Text(text = strings.cancel, color = colors.textPrimary)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            val cleanAmount = amountText.replace(',', '.').trim().toDoubleOrNull()
-                            if (title.isBlank()) {
-                                errorMessage = "Please enter or pick what you bought."
-                                return@Button
+                            val cleanAmount = amountText.trim().replace(',', '.').toDoubleOrNull()
+                            if (cleanAmount == null || cleanAmount <= 0.0) {
+                                errorMessage = strings.pleaseEnterValidAmount
+                            } else {
+                                val finalTitle = title.trim().ifEmpty { strings.separatePurchases }
+                                onSave(finalTitle, cleanAmount, note.trim(), selectedTimestamp)
                             }
-                            if (cleanAmount == null || cleanAmount <= 0) {
-                                errorMessage = "Please enter a valid amount (e.g. 25.50)."
-                                return@Button
-                            }
-                            if (selectedTimestamp > System.currentTimeMillis()) {
-                                errorMessage = "Future date/time is not allowed."
-                                return@Button
-                            }
-                            onSave(title.trim(), cleanAmount, note.trim(), selectedTimestamp)
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MintButtonColor,
-                            contentColor = MintButtonTextColor
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
-                        modifier = Modifier.testTag("save_shopping_expense_button")
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                        modifier = Modifier.testTag("save_shopping_button")
                     ) {
+                        Text(text = strings.save, color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditShoppingExpenseDialog(
+    expense: ExpenseEntity,
+    currency: String,
+    onDismiss: () -> Unit,
+    onSave: (title: String, amount: Double, note: String, coversMonths: Int) -> Unit
+) {
+    val colors = LocalAppColors.current
+    val strings = LocalAppStrings.current
+
+    var title by remember { mutableStateOf(expense.title) }
+    var amountText by remember { mutableStateOf(AppConstants.formatCurrency(expense.amount)) }
+    var note by remember { mutableStateOf(expense.note) }
+    var selectedCoversMonths by remember { mutableIntStateOf(expense.coversMonths) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val dateTimeFormat = remember { SimpleDateFormat("MMM d, yyyy · HH:mm", Locale.getDefault()) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .testTag("edit_shopping_expense_dialog")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = strings.editPurchaseTitle,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        fontSize = 20.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text(strings.purchaseNameLabel) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = {
+                        amountText = it
+                        errorMessage = null
+                    },
+                    label = { Text("${strings.totalSpent} ($currency)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = errorMessage != null,
+                    supportingText = {
+                        if (errorMessage != null) {
+                            Text(text = errorMessage!!, color = AccentRed)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text(strings.noteOptionalLabel) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = colors.cardBackground,
+                    border = BorderStroke(1.dp, colors.cardBorder)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Rounded.Lock, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Save",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 15.sp
-                            )
+                            text = "${strings.dateTimeLabel}: ${dateTimeFormat.format(Date(expense.dateTimestamp))}",
+                            style = MaterialTheme.typography.bodySmall.copy(color = colors.textSecondary, fontSize = 12.sp)
                         )
+                    }
+                }
+
+                if (expense.categoryId != 0L) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = strings.coversLabel,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textPrimary
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val durationOptions = listOf(
+                        1 to strings.month1,
+                        2 to strings.months2,
+                        3 to strings.months3,
+                        6 to strings.months6,
+                        12 to strings.months12
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        durationOptions.forEach { (months, label) ->
+                            FilterChip(
+                                selected = selectedCoversMonths == months,
+                                onClick = { selectedCoversMonths = months },
+                                label = { Text(label, fontSize = 12.sp) }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(text = strings.cancel, color = colors.textPrimary)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val cleanAmount = amountText.trim().replace(',', '.').toDoubleOrNull()
+                            if (cleanAmount == null || cleanAmount <= 0.0) {
+                                errorMessage = strings.pleaseEnterValidAmount
+                            } else {
+                                onSave(title.trim().ifEmpty { expense.title }, cleanAmount, note.trim(), selectedCoversMonths)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                    ) {
+                        Text(text = strings.update, color = Color.White)
                     }
                 }
             }
@@ -907,26 +651,32 @@ fun HouseholdDialog(
     onSave: (name: String, currency: String) -> Unit,
     onOpenBackupRestore: () -> Unit = {}
 ) {
+    val colors = LocalAppColors.current
+    val strings = LocalAppStrings.current
     var name by remember { mutableStateOf(currentName) }
     var currency by remember { mutableStateOf(currentCurrency) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 12.dp)
                 .testTag("household_dialog")
         ) {
-            Column(modifier = Modifier.padding(22.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
                 Text(
-                    text = "Household Profile",
+                    text = strings.householdSection,
                     style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                        fontSize = 18.sp
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        fontSize = 20.sp
                     )
                 )
 
@@ -935,18 +685,8 @@ fun HouseholdDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Household Name (e.g. Tarik)") },
+                    label = { Text(strings.householdName) },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("household_name_input")
@@ -957,71 +697,34 @@ fun HouseholdDialog(
                 OutlinedTextField(
                     value = currency,
                     onValueChange = { currency = it },
-                    label = { Text("Currency Code (e.g. MAD, EUR, USD)") },
+                    label = { Text(strings.currencyLabel) },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = Color(0xFF354B42),
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("household_currency_input")
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                OutlinedButton(
-                    onClick = {
-                        onDismiss()
-                        onOpenBackupRestore()
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, Color(0xFF284C3E)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MintButtonColor),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("open_backup_restore_from_profile_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.SettingsBackupRestore,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Local Backup & Restore", fontWeight = FontWeight.SemiBold)
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = TextPrimary)
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.testTag("cancel_household_button")
+                    ) {
+                        Text(text = strings.cancel, color = colors.textPrimary)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if (name.isNotBlank() && currency.isNotBlank()) {
-                                onSave(name, currency)
-                            }
+                            onSave(name.trim().ifEmpty { "Tarik" }, currency.trim().ifEmpty { "MAD" })
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MintButtonColor,
-                            contentColor = MintButtonTextColor
-                        ),
-                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
                         modifier = Modifier.testTag("save_household_button")
                     ) {
-                        Text("Save", fontWeight = FontWeight.SemiBold)
+                        Text(text = strings.save, color = Color.White)
                     }
                 }
             }
@@ -1029,10 +732,6 @@ fun HouseholdDialog(
     }
 }
 
-/**
- * Local Backup and Restore Dialog using Android Storage Access Framework (SAF).
- * Allows exporting app data to a local file and restoring it back. No cloud services.
- */
 @Composable
 fun BackupRestoreDialog(
     onDismiss: () -> Unit,
@@ -1041,496 +740,78 @@ fun BackupRestoreDialog(
     statusMessage: String? = null,
     onClearStatus: () -> Unit = {}
 ) {
+    val colors = LocalAppColors.current
+    val strings = LocalAppStrings.current
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 12.dp)
                 .testTag("backup_restore_dialog")
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(22.dp)
+                    .padding(24.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.SettingsBackupRestore,
-                            contentDescription = null,
-                            tint = MintButtonColor,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "Backup & Restore",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary,
-                                fontSize = 20.sp
-                            )
-                        )
-                    }
-
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = TextSecondary)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
                 Text(
-                    text = "Export your app database (all purchases, categories, incomes, and settings) to a local file on your device via Storage Access Framework, or restore from a previously saved backup file. 100% offline & private.",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextSecondary,
-                        lineHeight = 17.sp,
-                        fontSize = 12.5.sp
+                    text = strings.backupRestore,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        fontSize = 20.sp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Action Card 1: Backup (Export)
-                Surface(
+                Text(
+                    text = strings.backupDescription,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = colors.textSecondary,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                OutlinedButton(
                     onClick = onExportBackup,
-                    shape = RoundedCornerShape(16.dp),
-                    color = EmeraldSurfaceElevated,
-                    border = BorderStroke(1.dp, EmeraldCardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("export_backup_button")
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(EmeraldPrimary.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.UploadFile,
-                                contentDescription = null,
-                                tint = MintButtonColor,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Export Local Backup",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                            )
-                            Text(
-                                text = "Save a .json backup to your device storage",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TextSecondary,
-                                    fontSize = 11.5.sp
-                                )
-                            )
-                        }
-                    }
+                    Icon(Icons.Rounded.UploadFile, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(strings.exportBackup)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Action Card 2: Restore (Import)
-                Surface(
+                OutlinedButton(
                     onClick = onImportBackup,
-                    shape = RoundedCornerShape(16.dp),
-                    color = EmeraldSurfaceElevated,
-                    border = BorderStroke(1.dp, EmeraldCardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("import_backup_button")
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(EmeraldPrimary.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.DownloadForOffline,
-                                contentDescription = null,
-                                tint = MintButtonColor,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Restore from Local File",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                            )
-                            Text(
-                                text = "Select an existing backup file to restore",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TextSecondary,
-                                    fontSize = 11.5.sp
-                                )
-                            )
-                        }
-                    }
+                    Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(strings.restoreBackup)
                 }
 
-                if (statusMessage != null) {
+                if (!statusMessage.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(14.dp))
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = EmeraldSurfaceElevated,
-                        border = BorderStroke(1.dp, MintButtonColor.copy(alpha = 0.5f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = statusMessage,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(onClick = onClearStatus, modifier = Modifier.size(24.dp)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Close,
-                                    contentDescription = "Dismiss",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Close", color = TextPrimary)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EditShoppingExpenseDialog(
-    expense: ExpenseEntity,
-    currency: String,
-    onDismiss: () -> Unit,
-    onSave: (title: String, amount: Double, note: String, coversMonths: Int) -> Unit
-) {
-    val strings = LocalAppStrings.current
-    var title by remember { mutableStateOf(expense.title) }
-    var amountText by remember {
-        mutableStateOf(
-            if (expense.amount == expense.amount.toLong().toDouble())
-                expense.amount.toLong().toString()
-            else
-                String.format(java.util.Locale.US, "%.2f", expense.amount)
-        )
-    }
-    var note by remember { mutableStateOf(expense.note) }
-    var selectedCoversMonths by remember { mutableIntStateOf(expense.coversMonths.coerceAtLeast(1)) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.US) }
-    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.US) }
-    val remainingHours = AppConstants.remainingHours(expense.dateTimestamp)
-    val isEditable = AppConstants.isExpenseEditable(expense.dateTimestamp)
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-                .testTag("edit_shopping_expense_dialog")
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(22.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
                     Text(
-                        text = strings.editPurchaseTitle,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
-                            fontSize = 20.sp
-                        )
-                    )
-                    Text(
-                        text = if (isEditable) "$remainingHours h left to edit" else strings.locked,
+                        text = statusMessage,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = if (isEditable) EmeraldCyan else Color(0xFFFBBF24),
-                            fontSize = 11.5.sp,
+                            color = colors.primary,
                             fontWeight = FontWeight.Medium
                         )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = {
-                        title = it
-                        errorMessage = null
-                    },
-                    label = { Text(strings.purchaseNameLabel) },
-                    singleLine = true,
-                    enabled = isEditable,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = amountText,
-                    onValueChange = {
-                        amountText = it
-                        errorMessage = null
-                    },
-                    label = { Text(currency) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    enabled = isEditable,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
-                        focusedLabelColor = MintButtonColor,
-                        unfocusedLabelColor = TextSecondary,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Covers Multi-Month Selectable Chips (ONLY when expense belongs to a real category: categoryId != 0)
-                if (expense.categoryId != 0L) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = strings.coversLabel,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextSecondary,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 12.sp
-                            ),
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-
-                        val monthOptions = listOf(
-                            1 to strings.month1,
-                            2 to strings.months2,
-                            3 to strings.months3,
-                            6 to strings.months6,
-                            12 to strings.months12
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            monthOptions.forEach { (months, label) ->
-                                val isSelected = selectedCoversMonths == months
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = if (isSelected) EmeraldPrimary else EmeraldPrimary.copy(alpha = 0.08f),
-                                    border = BorderStroke(
-                                        1.dp,
-                                        if (isSelected) EmeraldPrimaryDark else EmeraldCardBorder
-                                    ),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clickable(enabled = isEditable) {
-                                            selectedCoversMonths = months
-                                        }
-                                        .testTag("edit_covers_chip_$months")
-                                ) {
-                                    Box(
-                                        modifier = Modifier.padding(vertical = 7.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = label,
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                color = if (isSelected) Color.White else TextPrimary,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                fontSize = 11.sp
-                                            ),
-                                            maxLines = 1
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (selectedCoversMonths > 1) {
-                            val startFormatted = AppConstants.formatMonthYear(expense.monthYear, strings.isFrench)
-                            val endMonthYear = AppConstants.addMonths(expense.monthYear, selectedCoversMonths - 1)
-                            val endFormatted = AppConstants.formatMonthYear(endMonthYear, strings.isFrench)
-                            Text(
-                                text = strings.coversHelper(startFormatted, endFormatted),
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = AccentOnSurface,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 12.sp
-                                ),
-                                modifier = Modifier
-                                    .padding(start = 4.dp, top = 2.dp)
-                                    .testTag("edit_covers_helper_text")
-                            )
-                        }
-                    }
-                }
-
-                // Unified Read-only Date & Time section (single full-width singleLine field)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    val dateFormatted = dateFormat.format(Date(expense.dateTimestamp))
-                    val timeFormatted = timeFormat.format(Date(expense.dateTimestamp))
-                    val dateTimeFormatted = "$dateFormatted · $timeFormatted"
-
-                    OutlinedTextField(
-                        value = dateTimeFormatted,
-                        onValueChange = {},
-                        enabled = false,
-                        readOnly = true,
-                        singleLine = true,
-                        label = { Text(strings.dateTimeLabel) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.CalendarToday,
-                                contentDescription = null,
-                                tint = TextMuted,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Lock,
-                                contentDescription = "Read-only date and time",
-                                tint = TextMuted,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = TextSecondary,
-                            disabledBorderColor = EmeraldCardBorder,
-                            disabledLabelColor = TextMuted,
-                            disabledLeadingIconColor = TextMuted,
-                            disabledTrailingIconColor = TextMuted,
-                            disabledContainerColor = EmeraldSurfaceElevated
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("edit_expense_date_readonly")
-                    )
-
-                    Text(
-                        text = strings.lockedHelper,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = TextMuted,
-                            fontSize = 11.sp
-                        ),
-                        modifier = Modifier.padding(start = 2.dp, top = 2.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    placeholder = { Text(strings.noteOptionalLabel) },
-                    singleLine = true,
-                    enabled = isEditable,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = MintButtonColor,
-                        unfocusedBorderColor = DefaultUnfocusedBorderColor,
-                        focusedPlaceholderColor = TextMuted,
-                        unfocusedPlaceholderColor = TextMuted,
-                        cursorColor = MintButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = errorMessage!!,
-                        color = AccentRed,
-                        style = MaterialTheme.typography.bodySmall
                     )
                 }
 
@@ -1538,42 +819,13 @@ fun EditShoppingExpenseDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text(strings.cancel, color = TextPrimary)
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
                     Button(
-                        onClick = {
-                            if (!isEditable) {
-                                errorMessage = "This transaction was backdated or is older than 24 hours and cannot be edited."
-                                return@Button
-                            }
-                            val cleanAmount = amountText.replace(',', '.').trim().toDoubleOrNull()
-                            if (title.isBlank()) {
-                                errorMessage = "Please enter an item name."
-                                return@Button
-                            }
-                            if (cleanAmount == null || cleanAmount <= 0) {
-                                errorMessage = "Please enter a valid amount."
-                                return@Button
-                            }
-                            onSave(title.trim(), cleanAmount, note.trim(), selectedCoversMonths)
-                        },
-                        enabled = isEditable,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MintButtonColor,
-                            contentColor = MintButtonTextColor,
-                            disabledContainerColor = EmeraldSurfaceElevated,
-                            disabledContentColor = TextMuted
-                        ),
-                        shape = RoundedCornerShape(20.dp)
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
                     ) {
-                        Text(if (isEditable) strings.update else strings.locked, fontWeight = FontWeight.SemiBold)
+                        Text(text = strings.close, color = Color.White)
                     }
                 }
             }
@@ -1590,104 +842,74 @@ fun ReorderCategoryDialog(
     onMoveDown: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colors = LocalAppColors.current
+    val strings = LocalAppStrings.current
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = DialogSurfaceColor,
-            border = BorderStroke(1.dp, DialogBorderColor),
+            shape = RoundedCornerShape(24.dp),
+            color = colors.dialogSurface,
+            border = BorderStroke(1.dp, colors.dialogBorder),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 12.dp)
                 .testTag("reorder_category_dialog")
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
+                    .padding(24.dp)
             ) {
                 Text(
-                    text = "Reorder ${category.name}",
+                    text = "${strings.categories} · ${category.name}",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        fontSize = 18.sp
+                        color = colors.textPrimary,
+                        fontSize = 20.sp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Move this category up or down in your budget list:",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Button(
-                        onClick = {
-                            onMoveUp()
-                            onDismiss()
-                        },
+                    OutlinedButton(
+                        onClick = onMoveUp,
                         enabled = canMoveUp,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = EmeraldSurfaceElevated,
-                            contentColor = EmeraldPrimary,
-                            disabledContainerColor = EmeraldCardBorder.copy(alpha = 0.5f),
-                            disabledContentColor = TextMuted
-                        ),
-                        shape = RoundedCornerShape(14.dp)
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowUpward,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Icon(Icons.Rounded.ArrowUpward, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Move Up")
+                        Text("Up")
                     }
 
-                    Button(
-                        onClick = {
-                            onMoveDown()
-                            onDismiss()
-                        },
+                    OutlinedButton(
+                        onClick = onMoveDown,
                         enabled = canMoveDown,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = EmeraldSurfaceElevated,
-                            contentColor = EmeraldPrimary,
-                            disabledContainerColor = EmeraldCardBorder.copy(alpha = 0.5f),
-                            disabledContentColor = TextMuted
-                        ),
-                        shape = RoundedCornerShape(14.dp)
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowDownward,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Icon(Icons.Rounded.ArrowDownward, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Move Down")
+                        Text("Down")
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Done", color = TextPrimary)
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                    ) {
+                        Text(text = strings.done, color = Color.White)
                     }
                 }
             }
         }
     }
 }
-

@@ -5,7 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "households")
 data class HouseholdEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val name: String = "Tarik",
     val currency: String = "MAD",
     val createdAt: Long = System.currentTimeMillis()
@@ -13,11 +14,12 @@ data class HouseholdEntity(
 
 @Entity(tableName = "categories")
 data class CategoryEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val name: String,
-    val iconKey: String, // "rent", "sport", "alimentation", "water", "electricity", "internet", "family", "transport", "other"
+    val iconKey: String = "category",
     val isRecurring: Boolean = true,
-    val colorHex: Long = 0xFF10B981,
+    val colorHex: Long = 0L,
     val householdId: Long = 1,
     val displayOrder: Int = 0,
     val activeFromMonth: String = "0000-01",
@@ -26,10 +28,11 @@ data class CategoryEntity(
 
 @Entity(tableName = "incomes")
 data class IncomeEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val source: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val source: String = "Monthly Income",
     val amount: Double,
-    val monthYear: String, // e.g. "2026-10"
+    val monthYear: String,
     val isRecurring: Boolean = true,
     val dateTimestamp: Long = System.currentTimeMillis(),
     val householdId: Long = 1,
@@ -38,21 +41,20 @@ data class IncomeEntity(
 
 @Entity(tableName = "expenses")
 data class ExpenseEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val title: String,
     val amount: Double,
-    val categoryId: Long,
-    val categoryName: String,
-    val categoryIconKey: String,
+    val categoryId: Long = 0,
+    val categoryName: String = "",
+    val categoryIconKey: String = "",
     val dateTimestamp: Long = System.currentTimeMillis(),
-    val monthYear: String, // e.g. "2026-10"
+    val monthYear: String,
     val note: String = "",
-    val isRecurring: Boolean = false,
+    val isRecurring: Boolean = true,
     val householdId: Long = 1,
     val coversMonths: Int = 1
-) {
-    val createdAt: Long get() = dateTimestamp
-}
+)
 
 data class CategoryWithSpent(
     val category: CategoryEntity,
@@ -64,8 +66,17 @@ data class MonthlyFinanceSummary(
     val monthYear: String,
     val totalIncome: Double,
     val totalSpent: Double,
-    val shoppingSpent: Double, // Day-to-day shopping and quick expenses
-    val actualRemaining: Double // totalIncome - totalSpent
+    val shoppingSpent: Double = 0.0,
+    val actualRemaining: Double = 0.0,
+    val expenseCount: Int = 0,
+    val daysRemainingInMonth: Int = 0
+)
+
+data class DailyExpenseGroup(
+    val dayKey: String,
+    val dayTitle: String,
+    val dayTotal: Double,
+    val expenses: List<ExpenseEntity>
 )
 
 data class PeriodSpending(
@@ -79,18 +90,14 @@ data class PeriodSpending(
 data class SwipeableSpendingSummary(
     val monthSpending: PeriodSpending,
     val weekSpending: PeriodSpending,
-    val todaySpending: PeriodSpending
-)
-
-data class DailyExpenseGroup(
-    val dayKey: String,
-    val dayTitle: String,
-    val dayTotal: Double,
-    val expenses: List<ExpenseEntity>
-)
+    val todaySpending: PeriodSpending,
+    val currentPageIndex: Int = 0
+) {
+    val pages: List<PeriodSpending> get() = listOf(monthSpending, weekSpending, todaySpending)
+}
 
 data class CategoryCoverage(
     val categoryId: Long,
     val coveringExpense: ExpenseEntity,
-    val endMonthYear: String // e.g. "2026-12"
+    val endMonthYear: String
 )

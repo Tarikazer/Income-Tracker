@@ -68,6 +68,14 @@ object AppConstants {
         }
     }
 
+    fun formatCurrency(amount: Double): String {
+        return if (amount == amount.toLong().toDouble()) {
+            amount.toLong().toString()
+        } else {
+            String.format(java.util.Locale.US, "%,.2f", amount)
+        }
+    }
+
     /**
      * Pure rule: hide period comparisons if previous period spending was 0 or less.
      */

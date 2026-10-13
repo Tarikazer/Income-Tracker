@@ -1,0 +1,83 @@
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Signed Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Prepare Signing Keystore
+        id: prepare_keystore
+        run: |
+          KEYSTORE_PATH="${RUNNER_TEMP}/release.jks"
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_PATH"
+          echo "keystore_path=$KEYSTORE_PATH" >> $GITHUB_OUTPUT
+
+      - name: Run Unit & Robolectric Tests
+        run: gradle testDebugUnitTest
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_FILE: ${{ steps.prepare_keystore.outputs.keystore_path }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle assembleRelease
+
+      - name: Verify Signed APK
+        run: |
+          APK_FILE="app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK_FILE" ]; then
+            echo "Error: Release APK not found at $APK_FILE"
+            exit 1
+          fi
+          echo "Verifying APK signatures..."
+          ${ANDROID_HOME}/build-tools/34.0.0/apksigner verify --verbose --print-certs "$APK_FILE"
+
+      - name: Prepare Artifact Names
+        id: artifact_prep
+        run: |
+          APK_SRC="app/build/outputs/apk/release/app-release.apk"
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            RELEASE_NAME="IncomeControl-${{ github.ref_name }}.apk"
+          else
+            RELEASE_NAME="IncomeControl-release.apk"
+          fi
+          cp "$APK_SRC" "$RELEASE_NAME"
+          echo "apk_path=$RELEASE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-release-apk
+          path: ${{ steps.artifact_prep.outputs.apk_path }}
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.artifact_prep.outputs.apk_path }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

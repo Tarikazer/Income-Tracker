@@ -1,8 +1,11 @@
-# Add project specific ProGuard rules here.
-
-# Keep RoomDatabase subclass
--keep class * extends androidx.room.RoomDatabase
-
-# Keep data models used in Room and JSON backup import/export
--keep class com.example.data.model.** { *; }
--keepclassmembers class com.example.data.model.** { *; }
+# Proguard / R8 rules for Income Control
+-keepattributes *Annotation*
+-keepclassmembers class * {
+    @androidx.room.* <methods>;
+    @androidx.room.* <fields>;
+}
+-dontwarn javax.annotation.**
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}

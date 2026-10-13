@@ -10,11 +10,11 @@ import kotlinx.coroutines.SupervisorJob
 class IncomeControlApp : Application() {
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    val database: AppDatabase by lazy {
+    val database by lazy {
         AppDatabase.getDatabase(this, applicationScope)
     }
 
-    val repository: FinanceRepository by lazy {
+    val repository by lazy {
         FinanceRepository(
             householdDao = database.householdDao(),
             categoryDao = database.categoryDao(),
