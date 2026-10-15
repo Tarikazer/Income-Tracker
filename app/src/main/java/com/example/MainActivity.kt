@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.AppDatabase
 import com.example.data.repository.FinanceRepository
-import com.example.ui.screens.AppLoadingScreen
+import com.example.ui.screens.SplashScreen
 import com.example.ui.screens.BudgetScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.SettingsScreen
@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (isAppLoading) {
-                        AppLoadingScreen()
+                        SplashScreen(onSplashComplete = { isAppLoading = false })
                     } else {
                         Crossfade(
                             targetState = currentScreen,

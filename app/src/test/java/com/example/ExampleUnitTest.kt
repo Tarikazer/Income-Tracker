@@ -157,8 +157,8 @@ class ExampleUnitTest {
         assertEquals("Settings", enStrings.settingsTitle)
         assertEquals("Paramètres", frStrings.settingsTitle)
 
-        assertEquals("Version 1.11", enStrings.versionLabel)
-        assertEquals("Version 1.11", frStrings.versionLabel)
+        assertEquals("Version 1.12", enStrings.versionLabel)
+        assertEquals("Version 1.12", frStrings.versionLabel)
 
         assertEquals(
             "Delete Rent and its 3 purchases? This cannot be undone.",

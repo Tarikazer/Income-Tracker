@@ -19,7 +19,7 @@ data class CategoryEntity(
     val name: String,
     val iconKey: String = "category",
     val isRecurring: Boolean = true,
-    val colorHex: Long = 0L,
+    val colorHex: Long = 0xFF10B981,
     val householdId: Long = 1,
     val displayOrder: Int = 0,
     val activeFromMonth: String = "0000-01",
@@ -51,7 +51,8 @@ data class ExpenseEntity(
     val dateTimestamp: Long = System.currentTimeMillis(),
     val monthYear: String,
     val note: String = "",
-    val isRecurring: Boolean = true,
+    val isRecurring: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis(),
     val householdId: Long = 1,
     val coversMonths: Int = 1
 )
