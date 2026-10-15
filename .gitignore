@@ -4,4 +4,3 @@ keystore.properties
 local.properties
 build/
 .gradle/
-*.apk

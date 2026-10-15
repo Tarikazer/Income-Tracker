@@ -1,5 +1,25 @@
 # APK Version Release Log
 
+## Version 1.12 (Version Code: 13)
+- **File**: `IncomeControl-v1.12.apk` (and `app-latest.apk`)
+- **Date**: October 14, 2026
+- **Package**: `com.aistudio.incomecontrol.tkrzq`
+
+### Features & Updates in v1.12:
+1. **LazyColumn Unique Key Collisions Fixed**:
+   - Fixed `java.lang.IllegalArgumentException: Key was already used` in `BudgetScreen` and `HomeScreen`.
+   - Namespaced income items (`income_${id}`) and category items (`category_${id}`) in `BudgetScreen.kt`.
+   - Namespaced separate purchases (`expense_${id}`) in `HomeScreen.kt`.
+   - Added unique keys to `CategoryHistoryDialog` list items (`cat_history_expense_${id}`).
+2. **Version Bump**:
+   - Updated `versionCode = 13` and `versionName = "1.12"` in `app/build.gradle.kts`.
+   - Updated about screen label to `Version 1.12` in `Localization.kt`.
+3. **Optimized Release**:
+   - Built with R8 optimization and resource shrinking enabled.
+   - Zip-aligned and signed with APK Signature Scheme v2 & v3.
+
+---
+
 ## Version 1.11 (Version Code: 12)
 - **File**: `IncomeControl-v1.11.apk` (and `app-latest.apk`)
 - **Date**: October 10, 2026
