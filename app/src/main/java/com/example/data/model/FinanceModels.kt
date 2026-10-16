@@ -52,10 +52,11 @@ data class ExpenseEntity(
     val monthYear: String,
     val note: String = "",
     val isRecurring: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis(),
     val householdId: Long = 1,
     val coversMonths: Int = 1
-)
+) {
+    val createdAt: Long get() = dateTimestamp
+}
 
 data class CategoryWithSpent(
     val category: CategoryEntity,

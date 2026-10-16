@@ -258,4 +258,85 @@ class ExampleUnitTest {
         val resultWhenDay31 = AppConstants.addMonths("2026-11", 2)
         assertEquals("2027-01", resultWhenDay31)
     }
+
+    @Test
+    fun testSchema6ExpensesTableColumns() {
+        // Read schema JSON directly from committed schema file (6.json)
+        val schemaFile = java.io.File("schemas/com.example.data.local.AppDatabase/6.json")
+        val altSchemaFile = java.io.File("app/schemas/com.example.data.local.AppDatabase/6.json")
+        val targetFile = if (schemaFile.exists()) schemaFile else altSchemaFile
+        assertTrue("Schema 6.json must exist", targetFile.exists())
+
+        val jsonString = targetFile.readText()
+        val jsonObject = org.json.JSONObject(jsonString)
+        val database = jsonObject.getJSONObject("database")
+        assertEquals(6, database.getInt("version"))
+        assertEquals("262353cb97b3d18dcada97aa018ba369", database.getString("identityHash"))
+
+        val entities = database.getJSONArray("entities")
+        var expensesCreateSql = ""
+        val jsonColumns = mutableListOf<String>()
+
+        for (i in 0 until entities.length()) {
+            val entity = entities.getJSONObject(i)
+            if (entity.getString("tableName") == "expenses") {
+                expensesCreateSql = entity.getString("createSql")
+                val fields = entity.getJSONArray("fields")
+                for (j in 0 until fields.length()) {
+                    jsonColumns.add(fields.getJSONObject(j).getString("columnName"))
+                }
+            }
+        }
+
+        val expectedColumns = listOf(
+            "id",
+            "title",
+            "amount",
+            "categoryId",
+            "categoryName",
+            "categoryIconKey",
+            "dateTimestamp",
+            "monthYear",
+            "note",
+            "isRecurring",
+            "householdId",
+            "coversMonths"
+        )
+
+        assertEquals("Schema 6.json columns must match expected columns", expectedColumns, jsonColumns)
+        assertFalse("createdAt must NOT be a column in schema 6.json", jsonColumns.contains("createdAt"))
+
+        // Create in-memory database using the exact SQL from schema 6
+        val context = org.robolectric.RuntimeEnvironment.getApplication()
+        val config = androidx.sqlite.db.SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(null)
+            .callback(object : androidx.sqlite.db.SupportSQLiteOpenHelper.Callback(6) {
+                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                    val createSql = expensesCreateSql.replace("\${TABLE_NAME}", "expenses")
+                    db.execSQL(createSql)
+                }
+
+                override fun onUpgrade(
+                    db: androidx.sqlite.db.SupportSQLiteDatabase,
+                    oldVersion: Int,
+                    newVersion: Int
+                ) {}
+            })
+            .build()
+
+        val helper = androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory().create(config)
+        val supportDb = helper.writableDatabase
+
+        val cursor = supportDb.query("PRAGMA table_info(expenses)")
+        val actualColumns = mutableListOf<String>()
+        while (cursor.moveToNext()) {
+            val colName = cursor.getString(cursor.getColumnIndexOrThrow("name"))
+            actualColumns.add(colName)
+        }
+        cursor.close()
+        supportDb.close()
+
+        assertEquals("Actual database table columns must exactly match expected", expectedColumns, actualColumns)
+        assertFalse("createdAt column must NOT exist in SQLite database", actualColumns.contains("createdAt"))
+    }
 }
